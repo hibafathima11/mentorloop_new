@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/colors.dart';
-import 'package:mentorloop/screens/Admin/student_approval_screen.dart';
-import 'package:mentorloop/screens/Admin/teacher_credentials_screen.dart';
-import 'package:mentorloop/utils/auth_service.dart';
-import 'package:mentorloop/screens/Common/login_screen.dart';
-import 'package:mentorloop/screens/Admin/admin_subjects_screen.dart';
-import 'package:mentorloop/screens/Admin/admin_parent_verification_screen.dart';
-import 'package:mentorloop/screens/Admin/admin_user_analytics_screen.dart';
-import 'package:mentorloop/screens/Admin/admin_teacher_chat_screen.dart';
-import 'package:mentorloop/screens/Admin/admin_complaints_screen.dart';
-import 'package:mentorloop/screens/Admin/admin_parent_feedback_screen.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/colors.dart';
+import 'package:mentorloop_new/screens/Admin/student_approval_screen.dart';
+import 'package:mentorloop_new/screens/Admin/teacher_credentials_screen.dart';
+import 'package:mentorloop_new/utils/auth_service.dart';
+import 'package:mentorloop_new/screens/Common/login_screen.dart';
+import 'package:mentorloop_new/screens/Admin/admin_subjects_screen.dart';
+import 'package:mentorloop_new/screens/Admin/admin_parent_verification_screen.dart';
+import 'package:mentorloop_new/screens/Admin/admin_user_analytics_screen.dart';
+import 'package:mentorloop_new/screens/Admin/admin_teacher_chat_screen.dart';
+import 'package:mentorloop_new/screens/Admin/admin_complaints_screen.dart';
+import 'package:mentorloop_new/screens/Admin/admin_parent_feedback_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});

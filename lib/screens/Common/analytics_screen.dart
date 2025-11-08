@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/utils/analytics_service.dart';
-import 'package:mentorloop/utils/colors.dart';
-import 'package:mentorloop/utils/responsive.dart';
+import 'package:mentorloop_new/utils/analytics_service.dart';
+import 'package:mentorloop_new/utils/colors.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   final String courseId;
