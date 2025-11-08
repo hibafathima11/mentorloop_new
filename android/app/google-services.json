@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "579131205390",
+    "project_id": "mentorloop-21e1e",
+    "storage_bucket": "mentorloop-21e1e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:579131205390:android:a249cc646199a12775d95f",
+        "android_client_info": {
+          "package_name": "com.example.mentorloop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARC4rlaDslfCGJbsX5zn05Wb8t6hGMJ6c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

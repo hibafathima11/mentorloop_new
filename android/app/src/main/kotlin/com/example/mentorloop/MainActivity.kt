@@ -1,4 +1,4 @@
-package com.example.mentorloop_new
+package com.example.mentorloop
 
 import io.flutter.embedding.android.FlutterActivity
 
