@@ -1,20 +1,20 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mentorloop/screens/Teacher/teacherchatlist.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/colors.dart';
-import 'package:mentorloop/utils/auth_service.dart';
-import 'package:mentorloop/utils/cloudinary_service.dart';
-import 'package:mentorloop/screens/Teacher/upload_content_screen.dart';
-import 'package:mentorloop/screens/Teacher/add_video_questions_screen.dart';
-import 'package:mentorloop/screens/Teacher/assignment_create_screen.dart';
-import 'package:mentorloop/screens/Teacher/assignment_review_screen.dart';
-import 'package:mentorloop/screens/Common/doubts_screen.dart';
-import 'package:mentorloop/screens/Common/analytics_screen.dart';
-import 'package:mentorloop/screens/Common/login_screen.dart';
-import 'package:mentorloop/screens/Teacher/teacher_parent_feedback_screen.dart';
-import 'package:mentorloop/screens/Teacher/exam_create_screen.dart';
+import 'package:mentorloop_new/screens/Teacher/teacherchatlist.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/colors.dart';
+import 'package:mentorloop_new/utils/auth_service.dart';
+import 'package:mentorloop_new/utils/cloudinary_service.dart';
+import 'package:mentorloop_new/screens/Teacher/upload_content_screen.dart';
+import 'package:mentorloop_new/screens/Teacher/add_video_questions_screen.dart';
+import 'package:mentorloop_new/screens/Teacher/assignment_create_screen.dart';
+import 'package:mentorloop_new/screens/Teacher/assignment_review_screen.dart';
+import 'package:mentorloop_new/screens/Common/doubts_screen.dart';
+import 'package:mentorloop_new/screens/Common/analytics_screen.dart';
+import 'package:mentorloop_new/screens/Common/login_screen.dart';
+import 'package:mentorloop_new/screens/Teacher/teacher_parent_feedback_screen.dart';
+import 'package:mentorloop_new/screens/Teacher/exam_create_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class TeacherDashboardScreen extends StatelessWidget {

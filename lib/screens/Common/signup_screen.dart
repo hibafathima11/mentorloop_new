@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/screens/Common/login_screen.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/colors.dart';
-import 'package:mentorloop/utils/auth_service.dart';
+import 'package:mentorloop_new/screens/Common/login_screen.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/colors.dart';
+import 'package:mentorloop_new/utils/auth_service.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:mentorloop/utils/cloudinary_service.dart';
+import 'package:mentorloop_new/utils/cloudinary_service.dart';
 import 'dart:io';
 
 class SignupScreen extends StatefulWidget {

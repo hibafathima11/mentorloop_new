@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 // ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/auth_service.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/auth_service.dart';
 
 class AdminParentVerificationScreen extends StatelessWidget {
   const AdminParentVerificationScreen({super.key});

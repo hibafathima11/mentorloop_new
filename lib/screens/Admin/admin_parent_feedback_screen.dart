@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 // ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mentorloop/utils/colors.dart';
+import 'package:mentorloop_new/utils/colors.dart';
 
 class AdminParentFeedbackScreen extends StatelessWidget {
   const AdminParentFeedbackScreen({super.key});

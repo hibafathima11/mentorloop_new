@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/utils/colors.dart';
+import 'package:mentorloop_new/utils/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mentorloop/utils/auth_service.dart';
+import 'package:mentorloop_new/utils/auth_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:mentorloop/utils/cloudinary_service.dart';
-import 'package:mentorloop/screens/Common/login_screen.dart';
-import 'package:mentorloop/screens/Common/privacy_policy_screen.dart';
-import 'package:mentorloop/screens/Common/terms_of_service_screen.dart';
-// ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
+import 'package:mentorloop_new/utils/cloudinary_service.dart';
+import 'package:mentorloop_new/screens/Common/login_screen.dart';
+import 'package:mentorloop_new/screens/Common/privacy_policy_screen.dart';
+import 'package:mentorloop_new/screens/Common/terms_of_service_screen.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AccountScreen extends StatefulWidget {

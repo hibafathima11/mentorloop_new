@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mentorloop/screens/Parent/child_progress_screen.dart';
+import 'package:mentorloop_new/screens/Parent/child_progress_screen.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});

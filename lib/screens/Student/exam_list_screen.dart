@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/utils/colors.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/data_service.dart';
-import 'package:mentorloop/models/entities.dart';
+import 'package:mentorloop_new/utils/colors.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/data_service.dart';
+import 'package:mentorloop_new/models/entities.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mentorloop/screens/Student/exam_take_screen.dart';
+import 'package:mentorloop_new/screens/Student/exam_take_screen.dart';
 
 class ExamListScreen extends StatelessWidget {
   const ExamListScreen({super.key});

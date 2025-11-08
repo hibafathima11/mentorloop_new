@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/utils/colors.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/data_service.dart';
-import 'package:mentorloop/models/entities.dart';
-import 'package:mentorloop/screens/Student/course_video_screen.dart';
+import 'package:mentorloop_new/utils/colors.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/data_service.dart';
+import 'package:mentorloop_new/models/entities.dart';
+import 'package:mentorloop_new/screens/Student/course_video_screen.dart';
 
 class StudentCoursesListScreen extends StatelessWidget {
   const StudentCoursesListScreen({super.key});

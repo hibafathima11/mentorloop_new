@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/screens/common/onboarding2_screen.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/colors.dart';
+import 'package:mentorloop_new/screens/common/onboarding2_screen.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/colors.dart';
 
 class Onboarding1Screen extends StatelessWidget {
   const Onboarding1Screen({super.key});

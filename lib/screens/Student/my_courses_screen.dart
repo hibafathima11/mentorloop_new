@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/utils/colors.dart';
-import 'package:mentorloop/screens/Student/courses_list_screen.dart';
-import 'package:mentorloop/utils/data_service.dart';
-import 'package:mentorloop/models/entities.dart';
+import 'package:mentorloop_new/utils/colors.dart';
+import 'package:mentorloop_new/screens/Student/courses_list_screen.dart';
+import 'package:mentorloop_new/utils/data_service.dart';
+import 'package:mentorloop_new/models/entities.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class MyCoursesScreen extends StatelessWidget {

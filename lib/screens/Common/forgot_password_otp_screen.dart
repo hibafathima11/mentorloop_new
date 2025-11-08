@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/screens/Common/reset_password_screen.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/colors.dart';
+import 'package:mentorloop_new/screens/Common/reset_password_screen.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/colors.dart';
 
 class ForgotPasswordOTPScreen extends StatefulWidget {
   final String phone;

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/screens/Student/commentscreen.dart';
-import 'package:mentorloop/screens/Student/pdf_view_screen.dart';
-import 'package:mentorloop/screens/Student/video_player_screen.dart';
-import 'package:mentorloop/screens/Student/course_video_screen.dart';
-import 'package:mentorloop/utils/colors.dart';
-import 'package:mentorloop/screens/Student/my_courses_screen.dart';
-import 'package:mentorloop/utils/data_service.dart';
-import 'package:mentorloop/models/entities.dart';
+import 'package:mentorloop_new/screens/Student/commentscreen.dart';
+import 'package:mentorloop_new/screens/Student/pdf_view_screen.dart';
+import 'package:mentorloop_new/screens/Student/video_player_screen.dart';
+import 'package:mentorloop_new/screens/Student/course_video_screen.dart';
+import 'package:mentorloop_new/utils/colors.dart';
+import 'package:mentorloop_new/screens/Student/my_courses_screen.dart';
+import 'package:mentorloop_new/utils/data_service.dart';
+import 'package:mentorloop_new/models/entities.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 

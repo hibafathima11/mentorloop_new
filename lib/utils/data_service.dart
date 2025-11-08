@@ -1,6 +1,6 @@
-// ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mentorloop/models/entities.dart' hide Timestamp;
+import 'package:mentorloop_new/models/entities.dart' hide Timestamp;
 
 class DataService {
   DataService._();

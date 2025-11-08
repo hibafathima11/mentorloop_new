@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/colors.dart';
-import 'package:mentorloop/utils/auth_service.dart';
-import 'package:mentorloop/screens/Student/home_screen.dart';
-import 'package:mentorloop/screens/Parent/parent_dashboard_screen.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/colors.dart';
+import 'package:mentorloop_new/utils/auth_service.dart';
+import 'package:mentorloop_new/screens/Student/home_screen.dart';
+import 'package:mentorloop_new/screens/Parent/parent_dashboard_screen.dart';
 
 class PhoneVerificationScreen extends StatefulWidget {
   final String name;

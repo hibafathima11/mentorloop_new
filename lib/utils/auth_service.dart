@@ -1,9 +1,9 @@
-// ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:mentorloop/utils/email_service.dart';
+import 'package:mentorloop_new/utils/email_service.dart';
 
 class AuthService {
   AuthService._();

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/screens/Common/onboarding1_screen.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/colors.dart';
+import 'package:mentorloop_new/screens/Common/onboarding1_screen.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mentorloop/screens/Common/login_screen.dart';
-import 'package:mentorloop/screens/Student/home_screen.dart';
-import 'package:mentorloop/screens/Teacher/teacher_dashboard_screen.dart';
-import 'package:mentorloop/screens/Parent/parent_dashboard_screen.dart';
+import 'package:mentorloop_new/screens/Common/login_screen.dart';
+import 'package:mentorloop_new/screens/Student/home_screen.dart';
+import 'package:mentorloop_new/screens/Teacher/teacher_dashboard_screen.dart';
+import 'package:mentorloop_new/screens/Parent/parent_dashboard_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

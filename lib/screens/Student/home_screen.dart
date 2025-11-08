@@ -1,16 +1,16 @@
 // ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:mentorloop/models/entities.dart';
-import 'package:mentorloop/screens/Student/account_screen.dart';
-import 'package:mentorloop/screens/Student/assignment_submit_screen.dart';
-import 'package:mentorloop/screens/Student/course_screen.dart';
-import 'package:mentorloop/screens/Student/my_courses_screen.dart';
-import 'package:mentorloop/screens/Student/messages_screen.dart';
-import 'package:mentorloop/screens/Student/exam_list_screen.dart';
+import 'package:mentorloop_new/models/entities.dart';
+import 'package:mentorloop_new/screens/Student/account_screen.dart';
+import 'package:mentorloop_new/screens/Student/assignment_submit_screen.dart';
+import 'package:mentorloop_new/screens/Student/course_screen.dart';
+import 'package:mentorloop_new/screens/Student/my_courses_screen.dart';
+import 'package:mentorloop_new/screens/Student/messages_screen.dart';
+import 'package:mentorloop_new/screens/Student/exam_list_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mentorloop/utils/auth_service.dart';
-import 'package:mentorloop/utils/data_service.dart';
+import 'package:mentorloop_new/utils/auth_service.dart';
+import 'package:mentorloop_new/utils/data_service.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});

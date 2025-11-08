@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/utils/colors.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/data_service.dart';
-import 'package:mentorloop/models/entities.dart';
+import 'package:mentorloop_new/utils/colors.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/data_service.dart';
+import 'package:mentorloop_new/models/entities.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AddVideoQuestionsScreen extends StatefulWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/utils/colors.dart';
-import 'package:mentorloop/utils/responsive.dart';
+import 'package:mentorloop_new/utils/colors.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
 
 class TermsOfServiceScreen extends StatelessWidget {
   const TermsOfServiceScreen({super.key});

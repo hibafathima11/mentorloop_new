@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/utils/colors.dart';
+import 'package:mentorloop_new/utils/colors.dart';
 
 class ChatScreen extends StatefulWidget {
   final String peerName;

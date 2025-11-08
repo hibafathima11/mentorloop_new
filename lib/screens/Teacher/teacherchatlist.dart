@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mentorloop/utils/responsive.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
 
 class TeacherChatListScreen extends StatelessWidget {
   const TeacherChatListScreen({super.key});

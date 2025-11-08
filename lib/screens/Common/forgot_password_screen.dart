@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/screens/Common/forgot_password_otp_screen.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/colors.dart';
-import 'package:mentorloop/utils/auth_service.dart';
+import 'package:mentorloop_new/screens/Common/forgot_password_otp_screen.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/colors.dart';
+import 'package:mentorloop_new/utils/auth_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});

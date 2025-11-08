@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop/screens/Common/signup_screen.dart';
-import 'package:mentorloop/screens/Student/home_screen.dart';
-import 'package:mentorloop/screens/Teacher/teacher_dashboard_screen.dart';
-import 'package:mentorloop/screens/Admin/admin_dashboard_screen.dart';
-import 'package:mentorloop/screens/Parent/parent_dashboard_screen.dart';
-import 'package:mentorloop/screens/common/forgot_password_screen.dart';
-import 'package:mentorloop/utils/responsive.dart';
-import 'package:mentorloop/utils/auth_service.dart';
-import 'package:mentorloop/utils/page_transitions.dart';
+import 'package:mentorloop_new/screens/Common/signup_screen.dart';
+import 'package:mentorloop_new/screens/Student/home_screen.dart';
+import 'package:mentorloop_new/screens/Teacher/teacher_dashboard_screen.dart';
+import 'package:mentorloop_new/screens/Admin/admin_dashboard_screen.dart';
+import 'package:mentorloop_new/screens/Parent/parent_dashboard_screen.dart';
+import 'package:mentorloop_new/screens/common/forgot_password_screen.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:mentorloop_new/utils/auth_service.dart';
+import 'package:mentorloop_new/utils/page_transitions.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
