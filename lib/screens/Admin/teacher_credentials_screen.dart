@@ -47,10 +47,17 @@ class _TeacherCredentialsScreenState extends State<TeacherCredentialsScreen> {
       if (emailSent) {
         message += '\n\n✅ Email notification sent successfully!';
       } else if (emailError != null) {
-        message += '\n\n⚠️ Email notification failed: $emailError';
+        // If the error hints at auth/public key, give a clearer suggestion
+        final lower = emailError.toLowerCase();
+        final looksLikeAuthIssue = lower.contains('public key') || lower.contains('authentication') || lower.contains('401') || lower.contains('403');
+        final hint = looksLikeAuthIssue
+            ? '\n\nPlease verify your EmailJS Public Key in lib/utils/email_service.dart.'
+            : '\n\nPlease verify your EmailJS Service/Template IDs and template variables.';
+        message += '\n\n⚠️ Email notification failed: $emailError$hint';
         backgroundColor = Colors.orange;
       } else {
-        message += '\n\n⚠️ Email notification could not be sent.';
+        message +=
+            '\n\n⚠️ Email notification could not be sent. Please verify your EmailJS Public Key in lib/utils/email_service.dart.';
         backgroundColor = Colors.orange;
       }
       

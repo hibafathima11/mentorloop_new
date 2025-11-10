@@ -24,7 +24,7 @@ class EmailService {
         'EmailJS not configured. Please set up EmailJS credentials in email_service.dart',
       );
     }
-
+ 
     final uri = Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
     final payload = {
       'service_id': emailJsServiceId,
