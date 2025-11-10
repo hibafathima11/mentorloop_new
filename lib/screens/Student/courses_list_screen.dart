@@ -28,10 +28,18 @@ class StudentCoursesListScreen extends StatelessWidget {
         child: StreamBuilder<List<Course>>(
           stream: DataService.watchAllCourses(),
           builder: (context, snapshot) {
-            if (!snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            final courses = snapshot.data!;
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Error loading courses: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              );
+            }
+            final courses = snapshot.data ?? const <Course>[];
             if (courses.isEmpty) {
               return Center(
                 child: Text(
@@ -157,10 +165,18 @@ class CourseVideosListScreen extends StatelessWidget {
         child: StreamBuilder<List<CourseVideo>>(
           stream: DataService.watchCourseVideos(course.id),
           builder: (context, snapshot) {
-            if (!snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            final videos = snapshot.data!;
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Error loading videos: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              );
+            }
+            final videos = snapshot.data ?? const <CourseVideo>[];
             if (videos.isEmpty) {
               return Center(
                 child: Text(

@@ -122,10 +122,23 @@ class _CourseScreenState extends State<CourseScreen> {
             StreamBuilder<List<Course>>(
               stream: DataService.watchAllCourses(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final items = snapshot.data!.where(_matchesQuery).toList();
+                if (snapshot.hasError) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Text(
+                        'Error loading courses: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  );
+                }
+                final items = (snapshot.data ?? const <Course>[])
+                    .where(_matchesQuery)
+                    .toList();
                 if (items.isEmpty) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 40),

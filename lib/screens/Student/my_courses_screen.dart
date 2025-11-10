@@ -38,10 +38,18 @@ class MyCoursesScreen extends StatelessWidget {
                       FirebaseAuth.instance.currentUser!.uid,
                     ),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final courses = snapshot.data!;
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Error loading courses: ${snapshot.error}',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  );
+                }
+                final courses = snapshot.data ?? const <Course>[];
                 if (courses.isEmpty) {
                   return const Center(child: Text('No enrolled courses yet'));
                 }

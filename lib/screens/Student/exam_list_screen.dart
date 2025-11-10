@@ -32,10 +32,18 @@ class ExamListScreen extends StatelessWidget {
       body: StreamBuilder<List<Course>>(
         stream: DataService.watchStudentCourses(user.uid),
         builder: (context, courseSnapshot) {
-          if (!courseSnapshot.hasData) {
+          if (courseSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          final courses = courseSnapshot.data!;
+          if (courseSnapshot.hasError) {
+            return Center(
+              child: Text(
+                'Error loading courses: ${courseSnapshot.error}',
+                style: const TextStyle(color: Colors.red),
+              ),
+            );
+          }
+          final courses = courseSnapshot.data ?? const <Course>[];
           if (courses.isEmpty) {
             return const Center(child: Text('No courses enrolled'));
           }

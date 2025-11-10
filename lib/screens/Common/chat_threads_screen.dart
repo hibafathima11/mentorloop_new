@@ -224,10 +224,44 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     return Scaffold(
       backgroundColor: AppColors.secondaryBackground,
       appBar: AppBar(
-        title: Text(
-          widget.thread.title.isNotEmpty ? widget.thread.title : 'Chat',
-          style: const TextStyle(color: Color(0xFF8B5E3C)),
-        ),
+        title: widget.thread.title.isNotEmpty
+            ? Text(
+                widget.thread.title,
+                style: const TextStyle(color: Color(0xFF8B5E3C)),
+              )
+            : Builder(
+                builder: (context) {
+                  final me = FirebaseAuth.instance.currentUser?.uid;
+                  String? otherId;
+                  if (me != null) {
+                    for (final id in widget.thread.memberIds) {
+                      if (id != me) {
+                        otherId = id;
+                        break;
+                      }
+                    }
+                  }
+                  if (otherId == null) {
+                    return const Text('Chat', style: TextStyle(color: Color(0xFF8B5E3C)));
+                  }
+                  return StreamBuilder<firestore.DocumentSnapshot<Map<String, dynamic>>>(
+                    stream: firestore.FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(otherId)
+                        .snapshots(),
+                    builder: (context, snap) {
+                      if (snap.connectionState == ConnectionState.waiting) {
+                        return const Text('Chat', style: TextStyle(color: Color(0xFF8B5E3C)));
+                      }
+                      final data = snap.data?.data() ?? <String, dynamic>{};
+                      final name = (data['name'] as String?)?.trim() ?? '';
+                      final email = (data['email'] as String?)?.trim() ?? '';
+                      final title = name.isNotEmpty ? name : (email.isNotEmpty ? email : 'Chat');
+                      return Text(title, style: const TextStyle(color: Color(0xFF8B5E3C)));
+                    },
+                  );
+                },
+              ),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
