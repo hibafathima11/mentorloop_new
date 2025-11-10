@@ -297,23 +297,27 @@ class _StudentApprovalScreenState extends State<StudentApprovalScreen> {
                                     onPressed: () async {
                                       try {
                                         await AuthService.approveStudent(uid);
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
+                                        if (!context.mounted) return;
+                                        
+                                        // Show success message
+                                        ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(
                                             content: Text(
-                                              'Student approved successfully',
+                                              'Student approved successfully!\n✅ Email notification sent.',
                                             ),
                                             backgroundColor: Colors.green,
+                                            duration: Duration(seconds: 4),
                                           ),
                                         );
                                       } catch (e) {
+                                        if (!context.mounted) return;
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
                                           SnackBar(
                                             content: Text('Error: $e'),
                                             backgroundColor: Colors.red,
+                                            duration: const Duration(seconds: 4),
                                           ),
                                         );
                                       }

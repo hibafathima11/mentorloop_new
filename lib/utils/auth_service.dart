@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -141,7 +140,41 @@ class AuthService {
   }
 
   static Future<void> approveStudent(String uid) async {
+    // Get user data to retrieve email
+    final userDoc = await _db.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      throw Exception('User not found');
+    }
+
+    final userData = userDoc.data()!;
+    final email = userData['email'] as String? ?? '';
+    final name = userData['name'] as String? ?? '';
+
+    // Update approval status
     await _db.collection('users').doc(uid).update({'approved': true});
+
+    // Send approval email notification
+    if (email.isNotEmpty) {
+      try {
+        final displayName = name.isNotEmpty ? name : email.split('@').first;
+        await EmailService.sendEmail(
+          templateParams: {
+            'to_email': email,
+            'subject': 'Your MentorLoop Account Has Been Approved',
+            'name': displayName,
+            'time': DateTime.now().toString().split('.')[0],
+            'message':
+                'Hello ${displayName},\n\n'
+                'Your MentorLoop student account has been approved by the administrator.\n\n'
+                'You can now log in to your account using your registered email and password.\n\n'
+                'Best regards,\n'
+                'MentorLoop Team',
+          },
+        );
+      } catch (_) {
+        // Silently ignore email errors - approval still succeeds
+      }
+    }
   }
 
   static Future<void> createParentVerificationRequest({
@@ -160,27 +193,80 @@ class AuthService {
     });
   }
 
-  static Future<void> issueTeacherCredentials(
+  static Future<Map<String, dynamic>> issueTeacherCredentials(
     String email,
     String tempPassword,
   ) async {
+    // Save teacher invite to database
     await _db.collection('teacher_invites').add({
       'email': email,
       'tempPassword': tempPassword,
       'createdAt': FieldValue.serverTimestamp(),
     });
+
+    // Try to send email notification
+    bool emailSent = false;
+    String? emailError;
+
     try {
+      final displayName = email.split('@').first;
       await EmailService.sendEmail(
         templateParams: {
           'to_email': email,
-          'subject': 'Your MentorLoop teacher account',
+          'subject': 'Your MentorLoop Teacher Account - Login Credentials',
+          'name': displayName,
+          'time': DateTime.now().toString().split('.')[0],
           'message':
-              'Welcome to MentorLoop!\nEmail: $email\nTemporary Password: $tempPassword\nPlease log in and change your password.',
+              'Welcome to MentorLoop!\n\n'
+              'Your teacher account has been created by the administrator.\n\n'
+              '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+              'YOUR LOGIN CREDENTIALS:\n'
+              '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'
+              'Email Address: $email\n'
+              'Temporary Password: $tempPassword\n\n'
+              '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'
+              '⚠️ IMPORTANT: Please log in immediately and change your password for security.\n\n'
+              'You can now access all teacher features in the MentorLoop platform.\n\n'
+              'Thank you for joining MentorLoop!\n\n'
+              'Best regards,\n'
+              'MentorLoop Team',
         },
       );
-    } catch (_) {
-      // Silently ignore email errors so UI can still show credentials in Snackbar
+      emailSent = true;
+      print('✅ Email sent successfully to: $email');
+    } catch (e) {
+      emailSent = false;
+      emailError = e.toString();
+      print('❌ Email sending failed: $emailError');
+
+      // Provide more helpful error messages
+      if (emailError.contains('EmailJS not configured')) {
+        emailError =
+            'EmailJS not configured. Please set up EmailJS credentials in email_service.dart';
+      } else if (emailError.contains('400')) {
+        emailError =
+            'Invalid EmailJS configuration. Please check your Service ID, Template ID, and template variables.';
+      } else if (emailError.contains('401') || emailError.contains('403')) {
+        emailError =
+            'EmailJS authentication failed. Please check your Public Key.';
+      } else if (emailError.contains('404')) {
+        emailError =
+            'EmailJS service or template not found. Please verify your Service ID and Template ID.';
+      } else if (emailError.contains('429')) {
+        emailError =
+            'EmailJS rate limit exceeded. Free tier allows 200 emails/month.';
+      } else if (emailError.contains('500') ||
+          emailError.contains('502') ||
+          emailError.contains('503')) {
+        emailError =
+            'EmailJS service temporarily unavailable. Please try again later.';
+      }
+
+      // Log the error for debugging (you can check console/logs)
+      print('Email sending error: $emailError');
     }
+
+    return {'success': true, 'emailSent': emailSent, 'emailError': emailError};
   }
 
   static Future<Map<String, dynamic>> signInWithGoogleAndEnsureProfile() async {

@@ -34,15 +34,31 @@ class _TeacherCredentialsScreenState extends State<TeacherCredentialsScreen> {
     final pwd = _tempPasswordController.text.trim();
 
     try {
-      await AuthService.issueTeacherCredentials(email, pwd);
-    } catch (e) {
-      // Do nothing on error
-    } finally {
+      final result = await AuthService.issueTeacherCredentials(email, pwd);
+      final emailSent = result['emailSent'] as bool? ?? false;
+      final emailError = result['emailError'] as String?;
+      
+      if (!mounted) return;
+      
+      // Show success message with email status
+      String message = 'Credentials issued to: $email\nTemp Password: $pwd';
+      Color backgroundColor = Colors.green;
+      
+      if (emailSent) {
+        message += '\n\n✅ Email notification sent successfully!';
+      } else if (emailError != null) {
+        message += '\n\n⚠️ Email notification failed: $emailError';
+        backgroundColor = Colors.orange;
+      } else {
+        message += '\n\n⚠️ Email notification could not be sent.';
+        backgroundColor = Colors.orange;
+      }
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Credentials issued to: $email\nTemp Password: $pwd'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 6),
+          content: Text(message),
+          backgroundColor: backgroundColor,
+          duration: const Duration(seconds: 8),
           action: SnackBarAction(
             label: 'COPY',
             textColor: Colors.white,
@@ -54,10 +70,21 @@ class _TeacherCredentialsScreenState extends State<TeacherCredentialsScreen> {
           ),
         ),
       );
-
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } finally {
       _emailController.clear();
       _tempPasswordController.clear();
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

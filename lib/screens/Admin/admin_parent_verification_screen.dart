@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 // ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mentorloop_new/utils/responsive.dart';
-import 'package:mentorloop_new/utils/auth_service.dart';
+import 'package:mentorloop_new/utils/email_service.dart';
 
 class AdminParentVerificationScreen extends StatelessWidget {
   const AdminParentVerificationScreen({super.key});
@@ -69,8 +69,11 @@ class AdminParentVerificationScreen extends StatelessWidget {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Parent approved'),
+                                    content: Text(
+                                      'Parent approved successfully!\n✅ Email notification sent.',
+                                    ),
                                     backgroundColor: Colors.green,
+                                    duration: Duration(seconds: 4),
                                   ),
                                 );
                               }
@@ -144,6 +147,35 @@ class AdminParentVerificationScreen extends StatelessWidget {
       'status': 'approved',
       'approvedAt': FieldValue.serverTimestamp(),
     });
+
+    // Send approval email notification to parent
+    final parentEmail = data['parentEmail'] as String? ?? '';
+    if (parentEmail.isNotEmpty) {
+      try {
+        // Get parent name from user document
+        final parentDoc = await db.collection('users').doc(parentId).get();
+        final parentData = parentDoc.data() ?? {};
+        final parentName = parentData['name'] as String? ?? '';
+        
+        final displayName = parentName.isNotEmpty ? parentName : parentEmail.split('@').first;
+        await EmailService.sendEmail(
+          templateParams: {
+            'to_email': parentEmail,
+            'subject': 'Your MentorLoop Parent Account Has Been Approved',
+            'name': displayName,
+            'time': DateTime.now().toString().split('.')[0],
+            'message':
+                'Hello ${displayName},\n\n'
+                'Your MentorLoop parent account has been approved by the administrator.\n\n'
+                'You can now log in to your account using your registered email and password.\n\n'
+                'Best regards,\n'
+                'MentorLoop Team',
+          },
+        );
+      } catch (_) {
+        // Silently ignore email errors - approval still succeeds
+      }
+    }
   }
 
   static Future<void> _rejectParentRequest(String requestId) async {
