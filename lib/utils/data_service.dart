@@ -28,7 +28,7 @@ class DataService {
     return _db
         .collection('users')
         .where('role', isEqualTo: 'student')
-        .orderBy('createdAt', descending: true)
+       
         .snapshots()
         .map(
           (s) =>
@@ -70,7 +70,7 @@ class DataService {
   static Stream<List<Course>> watchAllCourses() {
     return _db
         .collection('courses')
-        .orderBy('createdAt', descending: true)
+      
         .snapshots()
         .map((s) => s.docs.map((d) => Course.fromMap(d.id, d.data())).toList());
   }
@@ -79,7 +79,7 @@ class DataService {
     return _db
         .collection('courses')
         .where('studentIds', arrayContains: studentId)
-        .orderBy('createdAt', descending: true)
+
         .snapshots()
         .map((s) => s.docs.map((d) => Course.fromMap(d.id, d.data())).toList());
   }
@@ -94,7 +94,7 @@ class DataService {
     return _db
         .collection('materials')
         .where('courseId', isEqualTo: courseId)
-        .orderBy('createdAt', descending: true)
+
         .snapshots()
         .map(
           (s) =>
@@ -112,7 +112,7 @@ class DataService {
     return _db
         .collection('videos')
         .where('courseId', isEqualTo: courseId)
-        .orderBy('createdAt', descending: true)
+     
         .snapshots()
         .map(
           (s) =>
@@ -205,7 +205,7 @@ class DataService {
     return _db
         .collection('assignments')
         .where('courseId', isEqualTo: courseId)
-        .orderBy('createdAt', descending: true)
+   
         .snapshots()
         .map(
           (s) => s.docs.map((d) => Assignment.fromMap(d.id, d.data())).toList(),
@@ -223,7 +223,7 @@ class DataService {
     return _db
         .collection('submissions')
         .where('assignmentId', isEqualTo: assignmentId)
-        .orderBy('submittedAt', descending: true)
+
         .snapshots()
         .map(
           (s) => s.docs.map((d) => Submission.fromMap(d.id, d.data())).toList(),
@@ -250,7 +250,7 @@ class DataService {
     return _db
         .collection('doubts')
         .where('courseId', isEqualTo: courseId)
-        .orderBy('createdAt', descending: true)
+        
         .snapshots()
         .map(
           (s) =>
@@ -448,7 +448,7 @@ class DataService {
     return _db
         .collection('exams')
         .where('teacherId', isEqualTo: teacherId)
-        .orderBy('createdAt', descending: true)
+
         .snapshots()
         .map(
           (s) => s.docs.map((d) => Exam.fromMap(d.id, d.data())).toList(),
@@ -459,7 +459,7 @@ class DataService {
     return _db
         .collection('exams')
         .where('courseId', isEqualTo: courseId)
-        .orderBy('startDate', descending: false)
+    
         .snapshots()
         .map(
           (s) => s.docs.map((d) => Exam.fromMap(d.id, d.data())).toList(),
@@ -503,7 +503,7 @@ class DataService {
     return _db
         .collection('exam_attempts')
         .where('studentId', isEqualTo: studentId)
-        .orderBy('submittedAt', descending: true)
+       
         .snapshots()
         .map(
           (s) =>
