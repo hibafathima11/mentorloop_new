@@ -43,20 +43,40 @@ class EmailService {
       // Log response for debugging
       print('EmailJS Response Status: ${res.statusCode}');
       print('EmailJS Response Body: ${res.body}');
+      print('EmailJS Request Payload: ${jsonEncode(payload)}');
 
       if (res.statusCode < 200 || res.statusCode >= 300) {
         // Parse error response for better error message
         String errorMessage = 'Email send failed: ${res.statusCode}';
         try {
           final errorBody = jsonDecode(res.body);
-          if (errorBody is Map && errorBody.containsKey('text')) {
-            errorMessage += ' - ${errorBody['text']}';
+          if (errorBody is Map) {
+            if (errorBody.containsKey('text')) {
+              errorMessage += ' - ${errorBody['text']}';
+            } else if (errorBody.containsKey('message')) {
+              errorMessage += ' - ${errorBody['message']}';
+            } else if (errorBody.containsKey('error')) {
+              errorMessage += ' - ${errorBody['error']}';
+            } else {
+              errorMessage += ' - ${res.body}';
+            }
           } else {
             errorMessage += ' - ${res.body}';
           }
         } catch (_) {
           errorMessage += ' - ${res.body}';
         }
+
+        // Special handling for 422 errors
+        if (res.statusCode == 422) {
+          errorMessage += '\n\n422 Error usually means:\n';
+          errorMessage += '- Template variables don\'t match\n';
+          errorMessage += '- Missing required template variables\n';
+          errorMessage += '- Invalid template parameter format\n';
+          errorMessage +=
+              'Check your EmailJS template variables match what we\'re sending.';
+        }
+
         throw Exception(errorMessage);
       }
 
