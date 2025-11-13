@@ -55,10 +55,18 @@ class _DoubtThreadScreenState extends State<DoubtThreadScreen> {
               child: StreamBuilder<List<DoubtMessage>>(
                 stream: DataService.watchDoubtMessages(widget.thread.id),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  final items = snapshot.data!;
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error loading messages: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    );
+                  }
+                  final items = snapshot.data ?? const <DoubtMessage>[];
                   return ListView.separated(
                     padding: ResponsiveHelper.getResponsivePaddingAll(context),
                     itemCount: items.length,

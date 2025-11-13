@@ -57,10 +57,13 @@ class ExamListScreen extends StatelessWidget {
               return StreamBuilder<List<Exam>>(
                 stream: DataService.watchCourseExams(course.id),
                 builder: (context, examSnapshot) {
-                  if (!examSnapshot.hasData) {
+                  if (examSnapshot.connectionState == ConnectionState.waiting) {
                     return const SizedBox.shrink();
                   }
-                  final exams = examSnapshot.data!;
+                  if (examSnapshot.hasError) {
+                    return const SizedBox.shrink();
+                  }
+                  final exams = examSnapshot.data ?? const <Exam>[];
                   if (exams.isEmpty) {
                     return const SizedBox.shrink();
                   }

@@ -139,9 +139,16 @@ class _ExamTakeScreenState extends State<ExamTakeScreen> {
                 itemBuilder: (context, index) {
                   final question = _questions[index];
                   return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
+                    margin: EdgeInsets.only(
+                      bottom: ResponsiveHelper.getResponsiveMargin(
+                        context,
+                        mobile: 16,
+                        tablet: 20,
+                        desktop: 24,
+                      ),
+                    ),
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: ResponsiveHelper.getResponsivePaddingAll(context),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -177,7 +184,7 @@ class _ExamTakeScreenState extends State<ExamTakeScreen> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: ResponsiveHelper.getResponsivePaddingAll(context),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -195,7 +202,14 @@ class _ExamTakeScreenState extends State<ExamTakeScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B5E3C),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.symmetric(
+                      vertical: ResponsiveHelper.getResponsiveMargin(
+                        context,
+                        mobile: 16,
+                        tablet: 18,
+                        desktop: 20,
+                      ),
+                    ),
                   ),
                   child: _submitting
                       ? const CircularProgressIndicator()

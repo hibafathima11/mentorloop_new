@@ -76,10 +76,18 @@ class _DoubtsScreenState extends State<DoubtsScreen> {
               child: StreamBuilder<List<DoubtThread>>(
                 stream: DataService.watchCourseDoubts(widget.courseId),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  final threads = snapshot.data!;
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error loading doubts: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    );
+                  }
+                  final threads = snapshot.data ?? const <DoubtThread>[];
                   if (threads.isEmpty)
                     return const Center(child: Text('No threads yet'));
                   return ListView.separated(

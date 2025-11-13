@@ -41,10 +41,18 @@ class ChildProgressScreen extends StatelessWidget {
                 child: StreamBuilder<List<AttendanceRecord>>(
                   stream: DataService.watchStudentAttendance(studentId),
                   builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    final records = snapshot.data!;
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Error loading attendance: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      );
+                    }
+                    final records = snapshot.data ?? const <AttendanceRecord>[];
                     if (records.isEmpty)
                       return const Center(child: Text('No attendance records'));
                     return ListView.builder(
