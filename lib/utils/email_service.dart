@@ -27,7 +27,7 @@ class EmailService {
  
     final uri = Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
     final payload = {
-      'service_id': emailJsServiceId,
+       'service_id': emailJsServiceId,
       'template_id': emailJsTemplateId,
       'user_id': emailJsPublicKey,
       'template_params': templateParams,
