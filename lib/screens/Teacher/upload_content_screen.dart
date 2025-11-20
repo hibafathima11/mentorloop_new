@@ -345,6 +345,18 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
         durationSeconds: duration,
       );
       await DataService.addVideo(video);
+      
+      // Also add to materials collection so students can see it in course materials
+      final material = StudyMaterial(
+        id: '',
+        courseId: _selectedVideoCourseId!,
+        teacherId: _currentTeacherId!,
+        title: _videoTitle.text.trim(),
+        type: 'video',
+        url: _videoUrl.text.trim(),
+      );
+      await DataService.addMaterial(material);
+      
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
