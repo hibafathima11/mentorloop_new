@@ -24,10 +24,10 @@ class EmailService {
         'EmailJS not configured. Please set up EmailJS credentials in email_service.dart',
       );
     }
- 
+
     final uri = Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
     final payload = {
-       'service_id': emailJsServiceId,
+      'service_id': emailJsServiceId,
       'template_id': emailJsTemplateId,
       'user_id': emailJsPublicKey,
       'template_params': templateParams,
@@ -40,10 +40,8 @@ class EmailService {
         body: jsonEncode(payload),
       );
 
-      // Log response for debugging
-      print('EmailJS Response Status: ${res.statusCode}');
-      print('EmailJS Response Body: ${res.body}');
-      print('EmailJS Request Payload: ${jsonEncode(payload)}');
+      // Response logged only if needed for debugging
+      // Remove print statements for production
 
       if (res.statusCode < 200 || res.statusCode >= 300) {
         // Parse error response for better error message

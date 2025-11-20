@@ -3,8 +3,6 @@ import 'package:mentorloop_new/utils/colors.dart';
 import 'package:mentorloop_new/utils/responsive.dart';
 import 'package:mentorloop_new/utils/data_service.dart';
 import 'package:mentorloop_new/models/entities.dart';
-// ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AssignmentCreateScreen extends StatefulWidget {
@@ -129,7 +127,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobile: 8, tablet: 10, desktop: 12)),
                         StreamBuilder<List<Course>>(
                           stream: _currentTeacherId == null
                               ? const Stream.empty()
@@ -154,7 +152,9 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                                   (v == null || v.isEmpty) ? 'Required' : null,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(
+                                    ResponsiveHelper.getResponsiveCardRadius(context),
+                                  ),
                                   borderSide: BorderSide.none,
                                 ),
                                 filled: true,
@@ -166,11 +166,11 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
                   _field(context, _title, 'Title'),
-                  const SizedBox(height: 12),
+                  SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
                   _field(context, _description, 'Description', lines: 4),
-                  const SizedBox(height: 12),
+                  SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
                   Row(
                     children: [
                       const Text('Due date: '),
@@ -190,7 +190,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobile: 16, tablet: 20, desktop: 24)),
                   SizedBox(
                     width: double.infinity,
                     height: ResponsiveHelper.getResponsiveButtonHeight(context),
@@ -206,15 +206,20 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                         ),
                       ),
                       child: _isSaving
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
+                          ? SizedBox(
+                              height: ResponsiveHelper.getResponsiveIconSize(context),
+                              width: ResponsiveHelper.getResponsiveIconSize(context),
+                              child: const CircularProgressIndicator(
                                 color: Colors.white,
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text('Create'),
+                          : Text(
+                              'Create',
+                              style: TextStyle(
+                                fontSize: ResponsiveHelper.getResponsiveFontSize(context),
+                              ),
+                            ),
                     ),
                   ),
                 ],
@@ -239,7 +244,9 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(
+            ResponsiveHelper.getResponsiveCardRadius(context),
+          ),
           borderSide: BorderSide.none,
         ),
         filled: true,

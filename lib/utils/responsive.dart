@@ -44,7 +44,23 @@ class ResponsiveHelper {
     double horizontal = 20,
     double vertical = 20,
   }) {
-    return EdgeInsets.symmetric(horizontal: horizontal, vertical: vertical);
+    double hPadding = isMobile(context) 
+        ? horizontal 
+        : (isTablet(context) ? horizontal * 1.5 : horizontal * 2);
+    double vPadding = isMobile(context) 
+        ? vertical 
+        : (isTablet(context) ? vertical * 1.5 : vertical * 2);
+    return EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding);
+  }
+
+  static double getResponsiveSpacing(BuildContext context, {
+    double mobile = 16,
+    double tablet = 20,
+    double desktop = 24,
+  }) {
+    if (isMobile(context)) return mobile;
+    if (isTablet(context)) return tablet;
+    return desktop;
   }
 
   static double getResponsiveMargin(BuildContext context, {
@@ -119,12 +135,32 @@ class ResponsiveHelper {
     double crossAxisSpacing = 10,
     double mainAxisSpacing = 10,
   }) {
+    // Make grid responsive based on screen size
+    int responsiveCrossAxisCount = crossAxisCount;
+    if (isMobile(context)) {
+      responsiveCrossAxisCount = 1;
+    } else if (isTablet(context)) {
+      responsiveCrossAxisCount = crossAxisCount.clamp(1, 2);
+    } else {
+      responsiveCrossAxisCount = crossAxisCount.clamp(2, 4);
+    }
+    
     return GridView.count(
-      crossAxisCount: crossAxisCount,
+      crossAxisCount: responsiveCrossAxisCount,
       childAspectRatio: childAspectRatio,
       crossAxisSpacing: crossAxisSpacing,
       mainAxisSpacing: mainAxisSpacing,
       children: children,
     );
+  }
+
+  static int getResponsiveCrossAxisCount(BuildContext context, {
+    int mobile = 1,
+    int tablet = 2,
+    int desktop = 3,
+  }) {
+    if (isMobile(context)) return mobile;
+    if (isTablet(context)) return tablet;
+    return desktop;
   }
 }

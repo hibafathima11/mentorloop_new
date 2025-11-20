@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mentorloop_new/screens/common/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:mentorloop_new/utils/page_transitions.dart';
 import 'firebase_options.dart';
 
 void main() async {
