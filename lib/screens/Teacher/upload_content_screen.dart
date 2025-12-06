@@ -43,8 +43,6 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
   bool _isUploadingMaterial = false;
   bool _isUploadingVideo = false;
 
-  String? _uploadedUrl;
-  bool _uploading = false;
 
   @override
   void initState() {
@@ -86,25 +84,71 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
         type: FileType.any,
       );
       if (result == null || result.files.isEmpty) {
+        if (mounted) {
+          setState(() => _isUploadingMaterial = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No file selected')),
+          );
+        }
         return;
       }
       final path = result.files.single.path;
-      if (path == null) return;
+      if (path == null) {
+        if (mounted) {
+          setState(() => _isUploadingMaterial = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not access file path')),
+          );
+        }
+        return;
+      }
       final file = File(path);
+      if (!await file.exists()) {
+        if (mounted) {
+          setState(() => _isUploadingMaterial = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('File does not exist')),
+          );
+        }
+        return;
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Uploading file...'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      
       final secureUrl = await CloudinaryService.uploadFile(
         file: file,
         resourceType: 'auto',
       );
+      
+      if (secureUrl.isEmpty) {
+        throw Exception('Upload succeeded but no URL returned');
+      }
+      
       _materialUrl.text = secureUrl;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Material uploaded')),
+        SnackBar(
+          content: Text('Material uploaded successfully!'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Upload failed: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isUploadingMaterial = false);
     }
@@ -119,25 +163,72 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
         type: FileType.video,
       );
       if (result == null || result.files.isEmpty) {
+        if (mounted) {
+          setState(() => _isUploadingVideo = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No file selected')),
+          );
+        }
         return;
       }
       final path = result.files.single.path;
-      if (path == null) return;
+      if (path == null) {
+        if (mounted) {
+          setState(() => _isUploadingVideo = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not access file path')),
+          );
+        }
+        return;
+      }
       final file = File(path);
+      if (!await file.exists()) {
+        if (mounted) {
+          setState(() => _isUploadingVideo = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('File does not exist')),
+          );
+        }
+        return;
+      }
+      
+      // Show uploading message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Uploading video... This may take a while.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      
       final secureUrl = await CloudinaryService.uploadFile(
         file: file,
         resourceType: 'video',
       );
+      
+      if (secureUrl.isEmpty) {
+        throw Exception('Upload succeeded but no URL returned');
+      }
+      
       _videoUrl.text = secureUrl;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Video uploaded')),
+        SnackBar(
+          content: Text('Video uploaded successfully!\nURL: ${secureUrl.substring(0, secureUrl.length > 50 ? 50 : secureUrl.length)}...'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 4),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Upload failed: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isUploadingVideo = false);
     }
@@ -149,6 +240,25 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Unable to get current user. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (_selectedMaterialCourseId == null || _selectedMaterialCourseId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a course'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    if (_materialUrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please provide a URL or upload a file'),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
@@ -157,7 +267,7 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
     try {
       final material = StudyMaterial(
         id: '',
-        courseId: _selectedMaterialCourseId ?? '',
+        courseId: _selectedMaterialCourseId!,
         teacherId: _currentTeacherId!,
         title: _materialTitle.text.trim(),
         type: _materialType.value,
@@ -166,15 +276,26 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       await DataService.addMaterial(material);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Material saved to Firestore')),
+        const SnackBar(
+          content: Text('Material saved successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
       );
       _materialTitle.clear();
       _materialUrl.clear();
+      setState(() {
+        _selectedMaterialCourseId = null;
+      });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving material: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isSavingMaterial = false);
     }
@@ -186,6 +307,25 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Unable to get current user. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (_selectedVideoCourseId == null || _selectedVideoCourseId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a course'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    if (_videoUrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please upload a video first'),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
@@ -193,89 +333,58 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
     setState(() => _isSavingVideo = true);
     try {
       final duration = int.tryParse(_videoDuration.text.trim()) ?? 0;
+      if (duration <= 0) {
+        throw Exception('Duration must be greater than 0');
+      }
       final video = CourseVideo(
         id: '',
-        courseId: _selectedVideoCourseId ?? '',
+        courseId: _selectedVideoCourseId!,
         teacherId: _currentTeacherId!,
         title: _videoTitle.text.trim(),
         url: _videoUrl.text.trim(),
         durationSeconds: duration,
       );
       await DataService.addVideo(video);
+      
+      // Also add to materials collection so students can see it in course materials
+      final material = StudyMaterial(
+        id: '',
+        courseId: _selectedVideoCourseId!,
+        teacherId: _currentTeacherId!,
+        title: _videoTitle.text.trim(),
+        type: 'video',
+        url: _videoUrl.text.trim(),
+      );
+      await DataService.addMaterial(material);
+      
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Video saved to Firestore')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Video saved successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
       _videoTitle.clear();
       _videoUrl.clear();
       _videoDuration.clear();
+      setState(() {
+        _selectedVideoCourseId = null;
+      });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving video: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isSavingVideo = false);
     }
   }
 
-  Widget _filePicker(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _uploadedUrl == null ? 'No file chosen' : 'File uploaded!',
-          style: TextStyle(
-            color: _uploadedUrl == null ? Colors.red : Colors.green,
-          ),
-        ),
-        const SizedBox(height: 8),
-        ElevatedButton.icon(
-          onPressed: _uploading ? null : _pickAndUploadFile,
-          icon: const Icon(Icons.upload_file),
-          label: Text(_uploading ? 'Uploading...' : 'Choose File'),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _pickAndUploadFile() async {
-    setState(() {
-      _uploading = true;
-      _uploadedUrl = null;
-    });
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        allowMultiple: false,
-        withData: false,
-        type: FileType.any,
-      );
-      if (result == null || result.files.isEmpty) {
-        return;
-      }
-      final path = result.files.single.path;
-      if (path == null) return;
-      final file = File(path);
-      final secureUrl = await CloudinaryService.uploadFile(
-        file: file,
-        resourceType: 'auto',
-      );
-      setState(() {
-        _uploadedUrl = secureUrl;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('File uploaded')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('File upload failed: $e')));
-    } finally {
-      setState(() {
-        _uploading = false;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -392,7 +501,27 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
                         ? const Stream.empty()
                         : DataService.watchTeacherCourses(_currentTeacherId!),
                     builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return Text(
+                          'Error loading courses: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.red),
+                        );
+                      }
                       final courses = snapshot.data ?? const <Course>[];
+                      if (courses.isEmpty) {
+                        return const Text(
+                          'No courses found. Please create a course first.',
+                          style: TextStyle(color: Colors.orange),
+                        );
+                      }
                       return DropdownButtonFormField<String>(
                         value: _selectedMaterialCourseId,
                         items: courses
@@ -591,7 +720,27 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
                         ? const Stream.empty()
                         : DataService.watchTeacherCourses(_currentTeacherId!),
                     builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return Text(
+                          'Error loading courses: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.red),
+                        );
+                      }
                       final courses = snapshot.data ?? const <Course>[];
+                      if (courses.isEmpty) {
+                        return const Text(
+                          'No courses found. Please create a course first.',
+                          style: TextStyle(color: Colors.orange),
+                        );
+                      }
                       return DropdownButtonFormField<String>(
                         value: _selectedVideoCourseId,
                         items: courses

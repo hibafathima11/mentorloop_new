@@ -24,10 +24,18 @@ class AssignmentReviewScreen extends StatelessWidget {
         child: StreamBuilder<List<Submission>>(
           stream: DataService.watchAssignmentSubmissions(assignmentId),
           builder: (context, snapshot) {
-            if (!snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            final items = snapshot.data!;
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Error loading submissions: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              );
+            }
+            final items = snapshot.data ?? const <Submission>[];
             if (items.isEmpty) {
               return const Center(child: Text('No submissions yet'));
             }

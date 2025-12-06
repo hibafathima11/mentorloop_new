@@ -26,10 +26,18 @@ class ChatThreadsScreen extends StatelessWidget {
           : StreamBuilder<List<ChatThread>>(
               stream: DataService.watchMyThreads(uid),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final threads = snapshot.data!;
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Error loading chats: ${snapshot.error}',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  );
+                }
+                final threads = snapshot.data ?? const <ChatThread>[];
                 if (threads.isEmpty) {
                   return Center(
                     child: Text(
@@ -129,8 +137,22 @@ class ChatThreadsScreen extends StatelessWidget {
                           child: StreamBuilder<List<UserProfile>>(
                             stream: DataService.streamTeachers(),
                             builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(child: CircularProgressIndicator());
+                              }
+                              if (snapshot.hasError) {
+                                return Center(
+                                  child: Text(
+                                    'Error: ${snapshot.error}',
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                );
+                              }
                               final teachers =
                                   snapshot.data ?? const <UserProfile>[];
+                              if (teachers.isEmpty) {
+                                return const Center(child: Text('No teachers found'));
+                              }
                               return ListView.separated(
                                 itemCount: teachers.length,
                                 separatorBuilder: (_, __) =>

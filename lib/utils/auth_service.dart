@@ -233,11 +233,10 @@ class AuthService {
         },
       );
       emailSent = true;
-      print('✅ Email sent successfully to: $email');
+      // Email sent successfully (logging removed for production)
     } catch (e) {
       emailSent = false;
       emailError = e.toString();
-      print('❌ Email sending failed: $emailError');
 
       // Provide more helpful error messages
       if (emailError.contains('EmailJS not configured')) {
@@ -262,8 +261,7 @@ class AuthService {
             'EmailJS service temporarily unavailable. Please try again later.';
       }
 
-      // Log the error for debugging (you can check console/logs)
-      print('Email sending error: $emailError');
+      // Error logged in emailError variable for handling
     }
 
     return {'success': true, 'emailSent': emailSent, 'emailError': emailError};

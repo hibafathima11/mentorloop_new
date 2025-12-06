@@ -11,6 +11,7 @@ import 'package:mentorloop_new/screens/Student/exam_list_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mentorloop_new/utils/auth_service.dart';
 import 'package:mentorloop_new/utils/data_service.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -54,18 +55,18 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             _buildHeader(),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: ResponsiveHelper.getResponsivePaddingAll(context),
                 children: [
                   _buildProgressCard(),
-                  const SizedBox(height: 16),
+                  SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
                   _buildLearningBanner(),
-                  const SizedBox(height: 16),
+                  SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
                   _buildMeetupCard(),
-                  const SizedBox(height: 16),
+                  SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
                   _buildAssignmentsCard(),
-                  const SizedBox(height: 16),
+                  SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
                   _buildExamsCard(),
-                  const SizedBox(height: 24),
+                  SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobile: 24, tablet: 28, desktop: 32)),
                   _buildComplaintsCard(),
                 ],
               ),
@@ -150,13 +151,19 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: DataService.watchStudentAssessmentsToday(uid),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        if (snapshot.hasError) {
+          return const SizedBox.shrink();
+        }
         final totalSeconds = (snapshot.data ?? const [])
             .map((e) => (e['totalDurationSeconds'] as int?) ?? 0)
             .fold<int>(0, (a, b) => a + b);
         const goalSeconds = 60 * 60;
         final progress = (totalSeconds / goalSeconds).clamp(0.0, 1.0);
         return Container(
-          padding: const EdgeInsets.all(20),
+          padding: ResponsiveHelper.getResponsivePaddingAll(context),
           decoration: BoxDecoration(
             color: const Color(0xFFF0F8FF),
             borderRadius: BorderRadius.circular(16),
@@ -374,8 +381,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     return StreamBuilder<List<Course>>(
       stream: DataService.watchStudentCourses(user.uid),
       builder: (context, courseSnap) {
-        if (!courseSnap.hasData) return const SizedBox.shrink();
-        final courses = courseSnap.data!;
+        if (courseSnap.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        if (courseSnap.hasError) {
+          return const SizedBox.shrink();
+        }
+        final courses = courseSnap.data ?? const <Course>[];
         if (courses.isEmpty) return const SizedBox.shrink();
 
         // Collect all assignments from all courses
@@ -397,8 +409,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               (course) => StreamBuilder<List<Assignment>>(
                 stream: DataService.watchCourseAssignments(course.id),
                 builder: (context, assignSnap) {
-                  if (!assignSnap.hasData) return const SizedBox.shrink();
-                  final assignments = assignSnap.data!;
+                  if (assignSnap.connectionState == ConnectionState.waiting) {
+                    return const SizedBox.shrink();
+                  }
+                  if (assignSnap.hasError) {
+                    return const SizedBox.shrink();
+                  }
+                  final assignments = assignSnap.data ?? const <Assignment>[];
                   if (assignments.isEmpty) return const SizedBox.shrink();
                   return Column(
                     children: assignments

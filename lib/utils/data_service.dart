@@ -530,4 +530,80 @@ class DataService {
     if (q.docs.isEmpty) return null;
     return ExamAttempt.fromMap(q.docs.first.id, q.docs.first.data());
   }
+
+  // DELETE Operations
+  static Future<void> deleteCourse(String courseId) async {
+    await _db.collection('courses').doc(courseId).delete();
+  }
+
+  static Future<void> deleteMaterial(String materialId) async {
+    await _db.collection('materials').doc(materialId).delete();
+  }
+
+  static Future<void> deleteVideo(String videoId) async {
+    await _db.collection('videos').doc(videoId).delete();
+  }
+
+  static Future<void> deleteVideoQuestion(String questionId) async {
+    await _db.collection('video_questions').doc(questionId).delete();
+  }
+
+  static Future<void> deleteAssignment(String assignmentId) async {
+    await _db.collection('assignments').doc(assignmentId).delete();
+  }
+
+  static Future<void> deleteSubmission(String submissionId) async {
+    await _db.collection('submissions').doc(submissionId).delete();
+  }
+
+  static Future<void> deleteExam(String examId) async {
+    await _db.collection('exams').doc(examId).delete();
+  }
+
+  static Future<void> deleteExamQuestion(String questionId) async {
+    await _db.collection('exam_questions').doc(questionId).delete();
+  }
+
+  static Future<void> deleteDoubtThread(String threadId) async {
+    await _db.collection('doubts').doc(threadId).delete();
+  }
+
+  static Future<void> deleteDoubtMessage(String messageId) async {
+    await _db.collection('doubt_messages').doc(messageId).delete();
+  }
+
+  // UPDATE Operations (additional)
+  static Future<void> updateCourse(String courseId, Course course) async {
+    await _db.collection('courses').doc(courseId).update(course.toMap());
+  }
+
+  static Future<void> updateMaterial(String materialId, StudyMaterial material) async {
+    await _db.collection('materials').doc(materialId).update(material.toMap());
+  }
+
+  static Future<void> updateVideo(String videoId, CourseVideo video) async {
+    await _db.collection('videos').doc(videoId).update(video.toMap());
+  }
+
+  static Future<void> updateAssignment(String assignmentId, Assignment assignment) async {
+    await _db.collection('assignments').doc(assignmentId).update(assignment.toMap());
+  }
+
+  static Future<void> updateExam(String examId, Exam exam) async {
+    await _db.collection('exams').doc(examId).update(exam.toMap());
+  }
+
+  static Future<void> updateSubmission(String submissionId, Submission submission) async {
+    await _db.collection('submissions').doc(submissionId).update(submission.toMap());
+  }
+
+  static Future<void> removeStudentFromCourse(
+    String courseId,
+    String studentId,
+  ) async {
+    final ref = _db.collection('courses').doc(courseId);
+    await ref.update({
+      'studentIds': FieldValue.arrayRemove([studentId]),
+    });
+  }
 }

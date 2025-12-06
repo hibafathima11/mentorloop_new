@@ -27,7 +27,7 @@ android {
         applicationId = "com.example.mentorloop"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -38,6 +38,13 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // Enable ProGuard/R8 for release builds
+            isMinifyEnabled = false // Set to true if you want code shrinking
+            isShrinkResources = false // Set to true if isMinifyEnabled is true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
