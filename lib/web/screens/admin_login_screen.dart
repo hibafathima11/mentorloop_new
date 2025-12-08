@@ -26,6 +26,21 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       _error = null;
     });
 
+    // Allow a hardcoded admin login for local/dev convenience
+    final email = _emailController.text.trim().toLowerCase();
+    final password = _passwordController.text;
+    if ((email == 'admin@example.com' || email == 'admin') &&
+        password == '123456') {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const AdminDashboardContainer(),
+        ),
+      );
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),

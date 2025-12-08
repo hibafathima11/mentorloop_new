@@ -3,6 +3,8 @@ import 'package:mentorloop_new/screens/Common/signup_screen.dart';
 import 'package:mentorloop_new/screens/Student/home_screen.dart';
 import 'package:mentorloop_new/screens/Teacher/teacher_dashboard_screen.dart';
 import 'package:mentorloop_new/screens/Admin/admin_dashboard_screen.dart';
+import 'package:mentorloop_new/web/screens/admin_dashboard_screen.dart' as web_admin;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mentorloop_new/screens/Parent/parent_dashboard_screen.dart';
 import 'package:mentorloop_new/screens/common/forgot_password_screen.dart';
 import 'package:mentorloop_new/utils/responsive.dart';
@@ -65,8 +67,11 @@ class _LoginScreenState extends State<LoginScreen>
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Admin login successful')));
+        final Widget destination = kIsWeb
+            ? const web_admin.AdminDashboardScreen()
+            : const AdminDashboardScreen();
         Navigator.of(context).pushReplacementSlide(
-          const AdminDashboardScreen(),
+          destination,
           direction: SlideDirection.left,
         );
         return;

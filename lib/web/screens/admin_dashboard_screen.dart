@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mentorloop_new/web/widgets/admin_layout.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -14,43 +15,59 @@ class AdminDashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Stats Grid
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isMobile ? 1 : 4,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.3,
-            ),
-            itemCount: 4,
-            itemBuilder: (context, index) {
+          // Stats Grid (live counts)
+          FutureBuilder<Map<String, int>>(
+            future: () async {
+              final db = FirebaseFirestore.instance;
+              final usersSnap = await db.collection('users').get();
+              final coursesSnap = await db.collection('courses').get();
+              final assignmentsSnap = await db.collection('assignments').get();
+              final pendingSnap = await db
+                  .collection('users')
+                  .where('approved', isEqualTo: false)
+                  .get();
+
+              return {
+                'users': usersSnap.size,
+                'courses': coursesSnap.size,
+                'assignments': assignmentsSnap.size,
+                'pending': pendingSnap.size,
+              };
+            }(),
+            builder: (context, snap) {
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const SizedBox(
+                  height: 120,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final data = snap.data ?? {'users': 0, 'courses': 0, 'assignments': 0, 'pending': 0};
               final stats = [
-                {'title': 'Total Users', 'value': '1,234', 'icon': Icons.people},
-                {
-                  'title': 'Active Courses',
-                  'value': '45',
-                  'icon': Icons.school,
-                },
-                {
-                  'title': 'Total Assignments',
-                  'value': '342',
-                  'icon': Icons.assignment,
-                },
-                {
-                  'title': 'Pending Approvals',
-                  'value': '12',
-                  'icon': Icons.pending_actions,
-                },
+                {'title': 'Total Users', 'value': data['users'].toString(), 'icon': Icons.people},
+                {'title': 'Active Courses', 'value': data['courses'].toString(), 'icon': Icons.school},
+                {'title': 'Total Assignments', 'value': data['assignments'].toString(), 'icon': Icons.assignment},
+                {'title': 'Pending Approvals', 'value': data['pending'].toString(), 'icon': Icons.pending_actions},
               ];
 
-              final stat = stats[index];
-              return _StatCard(
-                title: stat['title'] as String,
-                value: stat['value'] as String,
-                icon: stat['icon'] as IconData,
-                index: index,
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: isMobile ? 1 : 4,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 1.3,
+                ),
+                itemCount: stats.length,
+                itemBuilder: (context, index) {
+                  final stat = stats[index];
+                  return _StatCard(
+                    title: stat['title'] as String,
+                    value: stat['value'] as String,
+                    icon: stat['icon'] as IconData,
+                    index: index,
+                  );
+                },
               );
             },
           ),

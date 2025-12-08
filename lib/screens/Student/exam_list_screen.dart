@@ -86,25 +86,36 @@ class ExamListScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       ...exams.map((exam) {
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: ListTile(
-                            title: Text(exam.title),
-                            subtitle: Text(exam.description),
-                            trailing: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ExamTakeScreen(
-                                      examId: exam.id,
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: const Text('Attend'),
-                            ),
-                          ),
+                        return FutureBuilder(
+                          future: DataService.getStudentExamAttempt(exam.id, user.uid),
+                          builder: (context, attemptSnap) {
+                            final attempted = attemptSnap.connectionState == ConnectionState.done && attemptSnap.data != null;
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              child: ListTile(
+                                title: Text(exam.title),
+                                subtitle: Text(exam.description),
+                                trailing: attempted
+                                    ? OutlinedButton(
+                                        onPressed: null,
+                                        child: const Text('Attempted'),
+                                      )
+                                    : ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => ExamTakeScreen(
+                                                examId: exam.id,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: const Text('Attend'),
+                                      ),
+                              ),
+                            );
+                          },
                         );
                       }),
                       const SizedBox(height: 16),
@@ -119,4 +130,5 @@ class ExamListScreen extends StatelessWidget {
     );
   }
 }
+
 

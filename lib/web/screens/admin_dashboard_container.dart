@@ -3,6 +3,7 @@ import 'package:mentorloop_new/web/screens/admin_dashboard_screen.dart';
 import 'package:mentorloop_new/web/screens/users_management_screen.dart';
 import 'package:mentorloop_new/web/screens/courses_management_screen.dart';
 import 'package:mentorloop_new/web/screens/assignments_management_screen.dart';
+import 'package:mentorloop_new/web/screens/exams_management_screen.dart';
 import 'package:mentorloop_new/web/screens/analytics_screen.dart';
 import 'package:mentorloop_new/web/screens/settings_screen.dart';
 
@@ -38,6 +39,11 @@ class _AdminDashboardContainerState extends State<AdminDashboardContainer> {
       icon: Icons.assignment,
       label: 'Assignments',
       screen: const AssignmentsManagementScreen(),
+    ),
+    AdminMenuItem(
+      icon: Icons.quiz,
+      label: 'Exams',
+      screen: const ExamsManagementScreen(),
     ),
     AdminMenuItem(
       icon: Icons.assessment,
