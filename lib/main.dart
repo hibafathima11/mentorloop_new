@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mentorloop_new/screens/common/splash_screen.dart';
+import 'package:mentorloop_new/web/screens/landing_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -130,7 +132,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const SplashScreen(),
+      home: kIsWeb ? const LandingPage() : const SplashScreen(),
     );
   }
 }
