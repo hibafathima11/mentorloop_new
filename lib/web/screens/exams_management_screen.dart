@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop_new/web/widgets/admin_layout.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
 import 'package:mentorloop_new/utils/data_service.dart';
 import 'package:mentorloop_new/models/entities.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -98,8 +98,8 @@ class _ExamsManagementScreenState extends State<ExamsManagementScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return const SizedBox.shrink();
 
-    return AdminLayout(
-      title: 'Exams',
+    return SingleChildScrollView(
+      padding: ResponsiveHelper.getResponsivePaddingAll(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

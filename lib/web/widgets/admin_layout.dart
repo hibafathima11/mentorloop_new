@@ -39,9 +39,18 @@ class _AdminLayoutState extends State<AdminLayout> {
                 _buildTopBar(context, isMobile),
                 // Content
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: widget.child,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight - 48,
+                          ),
+                          child: widget.child,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],

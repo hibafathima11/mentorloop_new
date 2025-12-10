@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop_new/web/widgets/admin_layout.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -47,13 +47,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final isMobile = screenSize.width < 768;
-
-    return AdminLayout(
-      title: 'Settings',
-      child: SingleChildScrollView(
-        child: Column(
+    return SingleChildScrollView(
+      padding: ResponsiveHelper.getResponsivePaddingAll(context),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // General Settings Section
@@ -328,7 +324,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 }

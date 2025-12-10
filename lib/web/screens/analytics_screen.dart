@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop_new/web/widgets/admin_layout.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
 
 class AnalyticsScreen extends StatelessWidget {
   const AnalyticsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final isMobile = screenSize.width < 768;
+    final isMobile = ResponsiveHelper.isMobile(context);
 
-    return AdminLayout(
-      title: 'Analytics',
-      child: SingleChildScrollView(
-        child: Column(
+    return SingleChildScrollView(
+      padding: ResponsiveHelper.getResponsivePaddingAll(context),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Key Metrics
@@ -348,7 +346,6 @@ class AnalyticsScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

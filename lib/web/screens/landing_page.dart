@@ -1,38 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:mentorloop_new/web/screens/admin_login_screen.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
 
-class LandingPage extends StatelessWidget {
+class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 
   @override
+  State<LandingPage> createState() => _LandingPageState();
+}
+
+class _LandingPageState extends State<LandingPage> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final isMobile = screenSize.width < 768;
+    final isMobile = ResponsiveHelper.isMobile(context);
+    final isTablet = ResponsiveHelper.isTablet(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
           children: [
             // Navbar
-            _buildNavbar(context, isMobile),
+            _buildNavbar(context, isMobile, isTablet),
             // Hero Section
-            _buildHeroSection(context, isMobile),
+            _buildHeroSection(context, isMobile, isTablet),
             // Features Section
-            _buildFeaturesSection(context, isMobile),
+            _buildFeaturesSection(context, isMobile, isTablet),
+            // Stats Section
+            _buildStatsSection(context, isMobile, isTablet),
             // CTA Section
-            _buildCtaSection(context, isMobile),
+            _buildCtaSection(context, isMobile, isTablet),
             // Footer
-            _buildFooter(context, isMobile),
+            _buildFooter(context, isMobile, isTablet),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavbar(BuildContext context, bool isMobile) {
+  Widget _buildNavbar(BuildContext context, bool isMobile, bool isTablet) {
     return Container(
-      height: 70,
+      height: ResponsiveHelper.getResponsiveButtonHeight(context, mobile: 60, tablet: 70, desktop: 80),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -44,74 +61,118 @@ class LandingPage extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 16 : 40,
+        padding: ResponsiveHelper.getResponsivePaddingSymmetric(
+          context,
+          horizontal: isMobile ? 16 : (isTablet ? 30 : 40),
           vertical: 12,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // Logo
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B5E3C),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'ML',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: ResponsiveHelper.getResponsiveIconSize(context),
+                      height: ResponsiveHelper.getResponsiveIconSize(context),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF8B5E3C), Color(0xFF6B4423)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF8B5E3C).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'ML',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    SizedBox(width: ResponsiveHelper.getResponsiveSpacing(context, mobile: 8, tablet: 12, desktop: 16)),
+                    if (!isMobile)
+                      Text(
+                        'MentorLoop',
+                        style: TextStyle(
+                          color: const Color(0xFF8B5E3C),
+                          fontWeight: FontWeight.bold,
+                          fontSize: ResponsiveHelper.getResponsiveFontSize(context, mobile: 18, tablet: 20, desktop: 24),
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                if (!isMobile)
-                  const Text(
-                    'MentorLoop',
-                    style: TextStyle(
-                      color: Color(0xFF8B5E3C),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                    ),
-                  ),
-              ],
+              ),
             ),
             // Nav Links
             if (!isMobile)
               Row(
                 children: [
-                  _navLink('Features', context),
-                  const SizedBox(width: 32),
-                  _navLink('About', context),
-                  const SizedBox(width: 32),
-                  _navLink('Contact', context),
-                  const SizedBox(width: 32),
+                  _navLink('Features', context, () {
+                    _scrollToSection(1);
+                  }),
+                  SizedBox(width: ResponsiveHelper.getResponsiveSpacing(context)),
+                  _navLink('About', context, () {
+                    _scrollToSection(2);
+                  }),
+                  SizedBox(width: ResponsiveHelper.getResponsiveSpacing(context)),
+                  _navLink('Contact', context, () {
+                    _scrollToSection(3);
+                  }),
+                  SizedBox(width: ResponsiveHelper.getResponsiveSpacing(context)),
                   ElevatedButton(
                     onPressed: () => _navigateToAdminLogin(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF8B5E3C),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: ResponsiveHelper.getResponsiveSpacing(context, mobile: 16, tablet: 20, desktop: 24),
+                        vertical: ResponsiveHelper.getResponsiveSpacing(context, mobile: 10, tablet: 12, desktop: 14),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          ResponsiveHelper.getResponsiveCardRadius(context),
+                        ),
                       ),
                     ),
-                    child: const Text('Admin Login'),
+                    child: Text(
+                      'Admin Login',
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.getResponsiveFontSize(context),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               )
             else
               ElevatedButton.icon(
                 onPressed: () => _navigateToAdminLogin(context),
-                icon: const Icon(Icons.login),
+                icon: const Icon(Icons.login, size: 18),
                 label: const Text('Admin'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B5E3C),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
               ),
           ],
         ),
@@ -119,27 +180,42 @@ class LandingPage extends StatelessWidget {
     );
   }
 
-  Widget _navLink(String text, BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () {},
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: Color(0xFF8B5E3C),
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
+  void _scrollToSection(int sectionIndex) {
+    // Simple scroll to approximate positions
+    final positions = [0.0, 400.0, 1200.0, 2000.0];
+    if (sectionIndex < positions.length) {
+      _scrollController.animateTo(
+        positions[sectionIndex],
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  Widget _navLink(String text, BuildContext context, VoidCallback onTap) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: const Color(0xFF8B5E3C),
+              fontWeight: FontWeight.w600,
+              fontSize: ResponsiveHelper.getResponsiveFontSize(context),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildHeroSection(BuildContext context, bool isMobile) {
-    final screenSize = MediaQuery.of(context).size;
+  Widget _buildHeroSection(BuildContext context, bool isMobile, bool isTablet) {
     return Container(
-      width: screenSize.width,
+      width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 16 : 40,
         vertical: isMobile ? 40 : 80,
@@ -155,6 +231,7 @@ class LandingPage extends StatelessWidget {
         ),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             'Empower Learning, Inspire Growth',
@@ -162,41 +239,69 @@ class LandingPage extends StatelessWidget {
             style: TextStyle(
               color: const Color(0xFF8B5E3C),
               fontWeight: FontWeight.bold,
-              fontSize: isMobile ? 28 : 48,
+              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                context,
+                mobile: 28,
+                tablet: 36,
+                desktop: 48,
+              ),
               letterSpacing: -0.5,
+              height: 1.2,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context)),
           Text(
             'An intelligent platform connecting teachers, students, and parents\nto create meaningful educational experiences',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.grey[600],
-              fontSize: isMobile ? 14 : 18,
+              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                context,
+                mobile: 14,
+                tablet: 16,
+                desktop: 18,
+              ),
               height: 1.6,
             ),
           ),
-          const SizedBox(height: 40),
+          SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobile: 32, tablet: 40, desktop: 48)),
           if (isMobile)
             Column(
               children: [
-                ElevatedButton.icon(
-                  onPressed: () => _navigateToAdminLogin(context),
-                  icon: const Icon(Icons.admin_panel_settings),
-                  label: const Text('Admin Dashboard'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B5E3C),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 14,
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _navigateToAdminLogin(context),
+                    icon: const Icon(Icons.admin_panel_settings),
+                    label: const Text('Admin Dashboard'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8B5E3C),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: ResponsiveHelper.getResponsiveSpacing(context),
+                        vertical: ResponsiveHelper.getResponsiveSpacing(context, mobile: 12, tablet: 14, desktop: 16),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          ResponsiveHelper.getResponsiveCardRadius(context),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.open_in_new),
-                  label: const Text('Download Mobile App'),
+                SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobile: 12, tablet: 14, desktop: 16)),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('Download Mobile App'),
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: ResponsiveHelper.getResponsiveSpacing(context),
+                        vertical: ResponsiveHelper.getResponsiveSpacing(context, mobile: 12, tablet: 14, desktop: 16),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             )
@@ -207,25 +312,39 @@ class LandingPage extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () => _navigateToAdminLogin(context),
                   icon: const Icon(Icons.admin_panel_settings),
-                  label: const Text('Go to Admin Dashboard'),
+                  label: Text(
+                    'Go to Admin Dashboard',
+                    style: TextStyle(
+                      fontSize: ResponsiveHelper.getResponsiveFontSize(context),
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B5E3C),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: ResponsiveHelper.getResponsiveSpacing(context, mobile: 24, tablet: 28, desktop: 32),
+                      vertical: ResponsiveHelper.getResponsiveSpacing(context, mobile: 14, tablet: 15, desktop: 16),
                     ),
-                    textStyle: const TextStyle(fontSize: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        ResponsiveHelper.getResponsiveCardRadius(context),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: ResponsiveHelper.getResponsiveSpacing(context)),
                 OutlinedButton.icon(
                   onPressed: () {},
                   icon: const Icon(Icons.open_in_new),
-                  label: const Text('Learn More'),
+                  label: Text(
+                    'Learn More',
+                    style: TextStyle(
+                      fontSize: ResponsiveHelper.getResponsiveFontSize(context),
+                    ),
+                  ),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: ResponsiveHelper.getResponsiveSpacing(context, mobile: 24, tablet: 28, desktop: 32),
+                      vertical: ResponsiveHelper.getResponsiveSpacing(context, mobile: 14, tablet: 15, desktop: 16),
                     ),
                   ),
                 ),
@@ -236,7 +355,108 @@ class LandingPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFeaturesSection(BuildContext context, bool isMobile) {
+  Widget _buildStatsSection(BuildContext context, bool isMobile, bool isTablet) {
+    final stats = [
+      {'value': '10K+', 'label': 'Active Students'},
+      {'value': '500+', 'label': 'Teachers'},
+      {'value': '1K+', 'label': 'Courses'},
+      {'value': '50K+', 'label': 'Assignments'},
+    ];
+
+    return Container(
+      padding: ResponsiveHelper.getResponsivePaddingAll(context, mobile: 40, tablet: 60, desktop: 80),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF8B5E3C).withOpacity(0.05),
+            const Color(0xFF6B4423).withOpacity(0.05),
+          ],
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (ResponsiveHelper.isMobile(context)) {
+            return Column(
+              children: stats.map((stat) => Padding(
+                padding: EdgeInsets.only(
+                  bottom: ResponsiveHelper.getResponsiveSpacing(context),
+                ),
+                child: _statCard(stat['value']!, stat['label']!, context),
+              )).toList(),
+            );
+          } else if (ResponsiveHelper.isTablet(context)) {
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 24,
+                mainAxisSpacing: 24,
+                childAspectRatio: 2,
+              ),
+              itemCount: stats.length,
+              itemBuilder: (context, index) => _statCard(stats[index]['value']!, stats[index]['label']!, context),
+            );
+          } else {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: stats.map((stat) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: _statCard(stat['value']!, stat['label']!, context),
+                ),
+              )).toList(),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _statCard(String value, String label, BuildContext context) {
+    return Container(
+      padding: ResponsiveHelper.getResponsivePaddingAll(context),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(
+          ResponsiveHelper.getResponsiveCardRadius(context),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: ResponsiveHelper.getResponsiveFontSize(context, mobile: 28, tablet: 32, desktop: 36),
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF8B5E3C),
+            ),
+          ),
+          SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context, mobile: 4, tablet: 6, desktop: 8)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: ResponsiveHelper.getResponsiveFontSize(context),
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeaturesSection(BuildContext context, bool isMobile, bool isTablet) {
     final features = [
       {
         'icon': Icons.school,
@@ -362,7 +582,7 @@ class LandingPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCtaSection(BuildContext context, bool isMobile) {
+  Widget _buildCtaSection(BuildContext context, bool isMobile, bool isTablet) {
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: isMobile ? 16 : 40,
@@ -419,7 +639,7 @@ class LandingPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFooter(BuildContext context, bool isMobile) {
+  Widget _buildFooter(BuildContext context, bool isMobile, bool isTablet) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 16 : 40,
@@ -477,14 +697,21 @@ class LandingPage extends StatelessWidget {
   }
 
   Widget _footerLink(String text) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Color(0xFF8B5E3C),
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {},
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFF8B5E3C),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       ),
     );

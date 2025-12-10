@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop_new/web/widgets/admin_layout.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UsersManagementScreen extends StatefulWidget {
   const UsersManagementScreen({super.key});
@@ -13,73 +14,42 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
   String _selectedRole = 'All';
   String _selectedStatus = 'All';
 
-  final List<Map<String, dynamic>> _users = [
-    {
-      'id': '1',
-      'name': 'John Doe',
-      'email': 'john@example.com',
-      'role': 'Student',
-      'status': 'Active',
-      'joinDate': '2024-01-15',
-      'avatar': '👤',
-    },
-    {
-      'id': '2',
-      'name': 'Sarah Smith',
-      'email': 'sarah@example.com',
-      'role': 'Teacher',
-      'status': 'Active',
-      'joinDate': '2024-01-10',
-      'avatar': '👩‍🏫',
-    },
-    {
-      'id': '3',
-      'name': 'Emma Wilson',
-      'email': 'emma@example.com',
-      'role': 'Parent',
-      'status': 'Pending',
-      'joinDate': '2024-02-01',
-      'avatar': '👩',
-    },
-    {
-      'id': '4',
-      'name': 'Mike Johnson',
-      'email': 'mike@example.com',
-      'role': 'Teacher',
-      'status': 'Active',
-      'joinDate': '2023-12-20',
-      'avatar': '👨‍🏫',
-    },
-    {
-      'id': '5',
-      'name': 'Lisa Brown',
-      'email': 'lisa@example.com',
-      'role': 'Student',
-      'status': 'Inactive',
-      'joinDate': '2024-01-05',
-      'avatar': '👤',
-    },
-  ];
-
-  late List<Map<String, dynamic>> _filteredUsers;
-
-  @override
-  void initState() {
-    super.initState();
-    _filteredUsers = _users;
-  }
-
-  void _filterUsers() {
-    _filteredUsers = _users.where((user) {
-      final nameMatch =
-          user['name'].toLowerCase().contains(_searchController.text.toLowerCase());
+  List<Map<String, dynamic>> _filterUsers(List<Map<String, dynamic>> users) {
+    return users.where((user) {
+      final nameMatch = (user['name'] ?? '')
+          .toLowerCase()
+          .contains(_searchController.text.toLowerCase());
+      final emailMatch = (user['email'] ?? '')
+          .toLowerCase()
+          .contains(_searchController.text.toLowerCase());
       final roleMatch =
           _selectedRole == 'All' || user['role'] == _selectedRole;
       final statusMatch =
           _selectedStatus == 'All' || user['status'] == _selectedStatus;
-      return nameMatch && roleMatch && statusMatch;
+      return (nameMatch || emailMatch) && roleMatch && statusMatch;
     }).toList();
-    setState(() {});
+  }
+
+  String _getAvatar(String role) {
+    switch (role.toLowerCase()) {
+      case 'teacher':
+        return '👩‍🏫';
+      case 'parent':
+        return '👩';
+      case 'student':
+        return '👤';
+      default:
+        return '👤';
+    }
+  }
+
+  String _formatDate(dynamic timestamp) {
+    if (timestamp == null) return 'N/A';
+    if (timestamp is Timestamp) {
+      final date = timestamp.toDate();
+      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    }
+    return timestamp.toString();
   }
 
   @override
@@ -90,11 +60,10 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final isMobile = screenSize.width < 768;
+    final isMobile = ResponsiveHelper.isMobile(context);
 
-    return AdminLayout(
-      title: 'Users Management',
+    return SingleChildScrollView(
+      padding: ResponsiveHelper.getResponsivePaddingAll(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -107,7 +76,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                 width: isMobile ? double.infinity : 300,
                 child: TextField(
                   controller: _searchController,
-                  onChanged: (_) => _filterUsers(),
+                  onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: 'Search users...',
                     prefixIcon: const Icon(Icons.search),
@@ -128,7 +97,6 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                 onChanged: (value) {
                   if (value != null) {
                     setState(() => _selectedRole = value);
-                    _filterUsers();
                   }
                 },
               ),
@@ -143,222 +111,248 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                 onChanged: (value) {
                   if (value != null) {
                     setState(() => _selectedStatus = value);
-                    _filterUsers();
                   }
                 },
               ),
-              ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Add user feature coming soon')),
-                  );
-                },
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add),
-                    SizedBox(width: 8),
-                    Text('Add User'),
-                  ],
-                ),
-              ),
+              // Removed Add User button - admin view only
             ],
           ),
           const SizedBox(height: 24),
 
           // Users Table
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: _filteredUsers.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.all(48.0),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.people_outline,
-                            size: 64,
-                            color: Colors.grey[300],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No users found',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
                       ),
-                    ),
-                  )
-                : SingleChildScrollView(
-                    scrollDirection: isMobile ? Axis.horizontal : Axis.vertical,
-                    child: SizedBox(
-                      width: isMobile ? 800 : double.infinity,
-                      child: DataTable(
-                        columns: const [
-                          DataColumn(
-                            label: Text(
-                              'Name',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Email',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Role',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Status',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Join Date',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Actions',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                        rows: _filteredUsers
-                            .map(
-                              (user) => DataRow(
-                                cells: [
-                                  DataCell(
-                                    Row(
-                                      children: [
-                                        Container(
-                                          width: 32,
-                                          height: 32,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: const Color(0xFF8B5E3C)
-                                                .withOpacity(0.1),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              user['avatar'],
-                                              style:
-                                                  const TextStyle(fontSize: 16),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(user['name']),
-                                      ],
-                                    ),
-                                  ),
-                                  DataCell(Text(user['email'])),
-                                  DataCell(
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _getRoleColor(user['role'])
-                                            .withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        user['role'],
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: _getRoleColor(user['role']),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  DataCell(
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _getStatusColor(user['status'])
-                                            .withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        user['status'],
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: _getStatusColor(user['status']),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  DataCell(Text(user['joinDate'])),
-                                  DataCell(
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.edit,
-                                              size: 18),
-                                          onPressed: () {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Edit user feature coming soon',
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete,
-                                              size: 18, color: Colors.red),
-                                          onPressed: () {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Delete user feature coming soon',
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                            .toList(),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(48.0),
+                  child: const Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(48.0),
+                  child: Center(
+                    child: Text(
+                      'Error loading users: ${snapshot.error}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.red[600],
                       ),
                     ),
                   ),
+                );
+              }
+
+              final users = snapshot.data?.docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final role = (data['role'] ?? 'user').toString();
+                final approved = data['approved'] as bool? ?? false;
+                final status = approved ? 'Active' : 'Pending';
+                
+                return {
+                  'id': doc.id,
+                  'name': data['name'] ?? 'Unknown',
+                  'email': data['email'] ?? 'No email',
+                  'role': role.substring(0, 1).toUpperCase() + role.substring(1),
+                  'status': status,
+                  'joinDate': _formatDate(data['createdAt']),
+                  'avatar': _getAvatar(role),
+                };
+              }).toList() ?? [];
+
+              final filteredUsers = _filterUsers(users);
+
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: filteredUsers.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(48.0),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.people_outline,
+                                size: 64,
+                                color: Colors.grey[300],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No users found',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        scrollDirection: isMobile ? Axis.horizontal : Axis.vertical,
+                        child: SizedBox(
+                          width: isMobile ? 800 : double.infinity,
+                          child: DataTable(
+                            columns: const [
+                              DataColumn(
+                                label: Text(
+                                  'Name',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Email',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Role',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Status',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Join Date',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                            rows: filteredUsers
+                                .map(
+                                  (user) => DataRow(
+                                    cells: [
+                                      DataCell(
+                                        Row(
+                                          children: [
+                                            Container(
+                                              width: 32,
+                                              height: 32,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: const Color(0xFF8B5E3C)
+                                                    .withValues(alpha: 0.1),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  user['avatar'],
+                                                  style: const TextStyle(fontSize: 16),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Flexible(
+                                              child: Text(
+                                                user['name'],
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Flexible(
+                                          child: Text(
+                                            user['email'],
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: _getRoleColor(user['role'])
+                                                .withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            user['role'],
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: _getRoleColor(user['role']),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: _getStatusColor(user['status'])
+                                                .withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            user['status'],
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: _getStatusColor(user['status']),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(Text(user['joinDate'])),
+                                    ],
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      ),
+              );
+            },
           ),
         ],
       ),

@@ -306,4 +306,25 @@ class AuthService {
     final profile = (await userRef.get()).data() ?? <String, dynamic>{};
     return profile;
   }
+
+  /// Send password reset email to user
+  static Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(
+        email: email.trim(),
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Check if email exists in the system
+  static Future<bool> emailExists(String email) async {
+    try {
+      final methods = await _auth.fetchSignInMethodsForEmail(email.trim());
+      return methods.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
 }

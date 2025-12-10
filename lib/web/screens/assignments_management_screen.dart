@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop_new/web/widgets/admin_layout.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AssignmentsManagementScreen extends StatefulWidget {
   const AssignmentsManagementScreen({super.key});
@@ -14,74 +15,74 @@ class _AssignmentsManagementScreenState
   final _searchController = TextEditingController();
   String _selectedStatus = 'All';
 
-  final List<Map<String, dynamic>> _assignments = [
-    {
-      'id': '1',
-      'title': 'Flutter Widgets Assignment',
-      'course': 'Flutter Development Basics',
-      'teacher': 'Sarah Smith',
-      'dueDate': '2024-02-15',
-      'submissions': 18,
-      'total': 24,
-      'status': 'Active',
-      'icon': '📋',
-    },
-    {
-      'id': '2',
-      'title': 'Web API Integration Project',
-      'course': 'Advanced Web Technologies',
-      'teacher': 'Mike Johnson',
-      'dueDate': '2024-02-10',
-      'submissions': 16,
-      'total': 18,
-      'status': 'Active',
-      'icon': '🌐',
-    },
-    {
-      'id': '3',
-      'title': 'Data Analysis with Python',
-      'course': 'Data Science Fundamentals',
-      'teacher': 'Sarah Smith',
-      'dueDate': '2024-02-20',
-      'submissions': 28,
-      'total': 32,
-      'status': 'Active',
-      'icon': '📊',
-    },
-    {
-      'id': '4',
-      'title': 'UI Mockup Design',
-      'course': 'UI/UX Design Principles',
-      'teacher': 'Emma Wilson',
-      'dueDate': '2024-03-05',
-      'submissions': 0,
-      'total': 15,
-      'status': 'Pending',
-      'icon': '🎨',
-    },
-    {
-      'id': '5',
-      'title': 'Mobile App Prototype',
-      'course': 'Mobile App Development',
-      'teacher': 'Mike Johnson',
-      'dueDate': '2024-02-28',
-      'submissions': 22,
-      'total': 28,
-      'status': 'Active',
-      'icon': '📱',
-    },
-  ];
-
-  late List<Map<String, dynamic>> _filteredAssignments;
+  List<Map<String, dynamic>> _assignments = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _filteredAssignments = _assignments;
+    _loadAssignments();
   }
 
-  void _filterAssignments() {
-    _filteredAssignments = _assignments.where((assignment) {
+  Future<void> _loadAssignments() async {
+    try {
+      final db = FirebaseFirestore.instance;
+      final assignmentsSnapshot = await db.collection('assignments').get();
+      
+      final assignments = <Map<String, dynamic>>[];
+      for (var doc in assignmentsSnapshot.docs) {
+        final data = doc.data();
+        // Get course name
+        String courseName = 'Unknown';
+        if (data['courseId'] != null) {
+          try {
+            final courseDoc = await db.collection('courses').doc(data['courseId']).get();
+            courseName = courseDoc.data()?['title'] ?? 'Unknown';
+          } catch (e) {
+            // Ignore
+          }
+        }
+        // Get teacher name
+        String teacherName = 'Unknown';
+        if (data['teacherId'] != null) {
+          try {
+            final teacherDoc = await db.collection('users').doc(data['teacherId']).get();
+            teacherName = teacherDoc.data()?['name'] ?? 'Unknown';
+          } catch (e) {
+            // Ignore
+          }
+        }
+        
+        assignments.add({
+          'id': doc.id,
+          'title': data['title'] ?? 'Untitled',
+          'course': courseName,
+          'teacher': teacherName,
+          'dueDate': data['dueDate']?.toString() ?? '',
+          'submissions': 0,
+          'total': 0,
+          'status': 'Active',
+          'icon': '📋',
+        });
+      }
+      
+      if (mounted) {
+        setState(() {
+          _assignments = assignments;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredAssignments {
+    return _assignments.where((assignment) {
       final titleMatch = assignment['title']
           .toLowerCase()
           .contains(_searchController.text.toLowerCase());
@@ -89,7 +90,6 @@ class _AssignmentsManagementScreenState
           assignment['status'] == _selectedStatus;
       return titleMatch && statusMatch;
     }).toList();
-    setState(() {});
   }
 
   @override
@@ -103,8 +103,8 @@ class _AssignmentsManagementScreenState
     final screenSize = MediaQuery.of(context).size;
     final isMobile = screenSize.width < 768;
 
-    return AdminLayout(
-      title: 'Assignments Management',
+    return SingleChildScrollView(
+      padding: ResponsiveHelper.getResponsivePaddingAll(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -117,7 +117,7 @@ class _AssignmentsManagementScreenState
                 width: isMobile ? double.infinity : 300,
                 child: TextField(
                   controller: _searchController,
-                  onChanged: (_) => _filterAssignments(),
+                  onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: 'Search assignments...',
                     prefixIcon: const Icon(Icons.search),
@@ -138,33 +138,18 @@ class _AssignmentsManagementScreenState
                 onChanged: (value) {
                   if (value != null) {
                     setState(() => _selectedStatus = value);
-                    _filterAssignments();
                   }
                 },
               ),
-              ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Create assignment feature coming soon'),
-                    ),
-                  );
-                },
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add),
-                    SizedBox(width: 8),
-                    Text('New Assignment'),
-                  ],
-                ),
-              ),
+              // Removed create button - admin view only
             ],
           ),
           const SizedBox(height: 24),
 
           // Assignments List
-          if (_filteredAssignments.isEmpty)
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_filteredAssignments.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(48.0),

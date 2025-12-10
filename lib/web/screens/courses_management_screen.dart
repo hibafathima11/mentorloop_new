@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop_new/web/widgets/admin_layout.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mentorloop_new/utils/data_service.dart';
 
 class CoursesManagementScreen extends StatefulWidget {
   const CoursesManagementScreen({super.key});
@@ -12,70 +14,65 @@ class CoursesManagementScreen extends StatefulWidget {
 class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
   final _searchController = TextEditingController();
   String _selectedStatus = 'All';
-
-  final List<Map<String, dynamic>> _courses = [
-    {
-      'id': '1',
-      'name': 'Flutter Development Basics',
-      'teacher': 'Sarah Smith',
-      'students': 24,
-      'status': 'Active',
-      'createdDate': '2024-01-15',
-      'progress': 75,
-      'icon': '🎯',
-    },
-    {
-      'id': '2',
-      'name': 'Advanced Web Technologies',
-      'teacher': 'Mike Johnson',
-      'students': 18,
-      'status': 'Active',
-      'createdDate': '2024-01-10',
-      'progress': 60,
-      'icon': '💻',
-    },
-    {
-      'id': '3',
-      'name': 'Data Science Fundamentals',
-      'teacher': 'Sarah Smith',
-      'students': 32,
-      'status': 'Active',
-      'createdDate': '2023-12-20',
-      'progress': 85,
-      'icon': '📊',
-    },
-    {
-      'id': '4',
-      'name': 'UI/UX Design Principles',
-      'teacher': 'Emma Wilson',
-      'students': 15,
-      'status': 'Draft',
-      'createdDate': '2024-02-01',
-      'progress': 30,
-      'icon': '🎨',
-    },
-    {
-      'id': '5',
-      'name': 'Mobile App Development',
-      'teacher': 'Mike Johnson',
-      'students': 28,
-      'status': 'Active',
-      'createdDate': '2024-01-05',
-      'progress': 50,
-      'icon': '📱',
-    },
-  ];
-
-  late List<Map<String, dynamic>> _filteredCourses;
+  List<Map<String, dynamic>> _courses = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _filteredCourses = _courses;
+    _loadCourses();
   }
 
-  void _filterCourses() {
-    _filteredCourses = _courses.where((course) {
+  Future<void> _loadCourses() async {
+    try {
+      final courses = await DataService.watchAllCourses().first;
+      if (mounted) {
+        setState(() {
+          _courses = courses.map((course) => {
+            'id': course.id,
+            'name': course.title,
+            'teacher': 'Loading...', // Will be loaded separately
+            'students': course.studentIds.length,
+            'status': 'Active',
+            'createdDate': course.createdAt?.toString() ?? DateTime.now().toString(),
+            'progress': 0,
+            'icon': '🎯',
+          }).toList();
+          _isLoading = false;
+        });
+        // Load teacher names
+        _loadTeacherNames();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadTeacherNames() async {
+    final db = FirebaseFirestore.instance;
+    for (var course in _courses) {
+      try {
+        final courseDoc = await db.collection('courses').doc(course['id']).get();
+        final teacherId = courseDoc.data()?['teacherId'];
+        if (teacherId != null) {
+          final teacherDoc = await db.collection('users').doc(teacherId).get();
+          final teacherName = teacherDoc.data()?['name'] ?? 'Unknown';
+          setState(() {
+            course['teacher'] = teacherName;
+          });
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredCourses {
+    return _courses.where((course) {
       final nameMatch = course['name']
           .toLowerCase()
           .contains(_searchController.text.toLowerCase());
@@ -83,7 +80,6 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
           _selectedStatus == 'All' || course['status'] == _selectedStatus;
       return nameMatch && statusMatch;
     }).toList();
-    setState(() {});
   }
 
   @override
@@ -97,8 +93,8 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
     final screenSize = MediaQuery.of(context).size;
     final isMobile = screenSize.width < 768;
 
-    return AdminLayout(
-      title: 'Courses Management',
+    return SingleChildScrollView(
+      padding: ResponsiveHelper.getResponsivePaddingAll(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -111,7 +107,7 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
                 width: isMobile ? double.infinity : 300,
                 child: TextField(
                   controller: _searchController,
-                  onChanged: (_) => _filterCourses(),
+                  onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: 'Search courses...',
                     prefixIcon: const Icon(Icons.search),
@@ -132,33 +128,18 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
                 onChanged: (value) {
                   if (value != null) {
                     setState(() => _selectedStatus = value);
-                    _filterCourses();
                   }
                 },
               ),
-              ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Create course feature coming soon'),
-                    ),
-                  );
-                },
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add),
-                    SizedBox(width: 8),
-                    Text('New Course'),
-                  ],
-                ),
-              ),
+              // Removed create button - admin view only
             ],
           ),
           const SizedBox(height: 24),
 
           // Courses Grid
-          if (_filteredCourses.isEmpty)
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_filteredCourses.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(48.0),
@@ -196,20 +177,6 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
                 final course = _filteredCourses[index];
                 return _CourseCard(
                   course: course,
-                  onEdit: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Edit course feature coming soon'),
-                      ),
-                    );
-                  },
-                  onDelete: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Delete course feature coming soon'),
-                      ),
-                    );
-                  },
                 );
               },
             ),
@@ -221,13 +188,9 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
 
 class _CourseCard extends StatelessWidget {
   final Map<String, dynamic> course;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
 
   const _CourseCard({
     required this.course,
-    required this.onEdit,
-    required this.onDelete,
   });
 
   @override
@@ -342,19 +305,7 @@ class _CourseCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.edit, size: 18),
-                onPressed: onEdit,
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete, size: 18, color: Colors.red),
-                onPressed: onDelete,
-              ),
-            ],
-          ),
+          // Removed edit/delete buttons - admin view only
         ],
       ),
     );
