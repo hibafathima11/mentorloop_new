@@ -32,12 +32,16 @@ class _AssignmentsManagementScreenState
       final assignments = <Map<String, dynamic>>[];
       for (var doc in assignmentsSnapshot.docs) {
         final data = doc.data();
-        // Get course name
+        // Get course name and student count
         String courseName = 'Unknown';
+        int totalStudents = 0;
         if (data['courseId'] != null) {
           try {
             final courseDoc = await db.collection('courses').doc(data['courseId']).get();
-            courseName = courseDoc.data()?['title'] ?? 'Unknown';
+            final courseData = courseDoc.data();
+            courseName = courseData?['title'] ?? 'Unknown';
+            final studentIds = courseData?['studentIds'] as List?;
+            totalStudents = studentIds?.length ?? 0;
           } catch (e) {
             // Ignore
           }
@@ -53,14 +57,37 @@ class _AssignmentsManagementScreenState
           }
         }
         
+        // Get submission count
+        int submissionCount = 0;
+        try {
+          final submissionsSnapshot = await db
+              .collection('submissions')
+              .where('assignmentId', isEqualTo: doc.id)
+              .get();
+          submissionCount = submissionsSnapshot.docs.length;
+        } catch (e) {
+          // Ignore
+        }
+        
+        // Format due date
+        String dueDateStr = 'Not set';
+        if (data['dueDate'] != null) {
+          if (data['dueDate'] is Timestamp) {
+            final date = (data['dueDate'] as Timestamp).toDate();
+            dueDateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+          } else {
+            dueDateStr = data['dueDate'].toString();
+          }
+        }
+        
         assignments.add({
           'id': doc.id,
           'title': data['title'] ?? 'Untitled',
           'course': courseName,
           'teacher': teacherName,
-          'dueDate': data['dueDate']?.toString() ?? '',
-          'submissions': 0,
-          'total': 0,
+          'dueDate': dueDateStr,
+          'submissions': submissionCount,
+          'total': totalStudents,
           'status': 'Active',
           'icon': '📋',
         });
@@ -180,9 +207,11 @@ class _AssignmentsManagementScreenState
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final assignment = _filteredAssignments[index];
-                final submissionPercentage =
-                    (assignment['submissions'] / assignment['total'] * 100)
-                        .toStringAsFixed(0);
+                final submissions = assignment['submissions'] as int;
+                final total = assignment['total'] as int;
+                final submissionPercentage = total > 0
+                    ? ((submissions / total) * 100).toStringAsFixed(0)
+                    : '0';
 
                 return Container(
                   decoration: BoxDecoration(
@@ -283,7 +312,7 @@ class _AssignmentsManagementScreenState
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${assignment['submissions']}/${assignment['total']} ($submissionPercentage%)',
+                                '$submissions/$total ($submissionPercentage%)',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -340,7 +369,7 @@ class _AssignmentsManagementScreenState
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: assignment['submissions'] / assignment['total'],
+                          value: total > 0 ? (submissions / total) : 0.0,
                           minHeight: 6,
                           backgroundColor: Colors.grey[200],
                           valueColor: const AlwaysStoppedAnimation<Color>(
@@ -349,43 +378,7 @@ class _AssignmentsManagementScreenState
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('View details coming soon'),
-                                ),
-                              );
-                            },
-                            child: const Text('View Submissions'),
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            icon: const Icon(Icons.edit, size: 18),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Edit assignment coming soon'),
-                                ),
-                              );
-                            },
-                          ),
-                          IconButton(
-                            icon:
-                                const Icon(Icons.delete, size: 18, color: Colors.red),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Delete assignment coming soon'),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
+                      // Removed edit/delete buttons - admin view only
                     ],
                   ),
                 );

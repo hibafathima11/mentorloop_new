@@ -1,5 +1,6 @@
 // ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' as cloud_firestore;
+import 'package:cloud_firestore/cloud_firestore.dart' show FieldValue;
 
 // Provide a local alias so analyzer doesn't error when Firestore types
 // aren't available in analysis context.
@@ -536,6 +537,26 @@ class Exam {
   });
 
   factory Exam.fromMap(String id, Map<String, dynamic> map) {
+    // Handle Timestamp conversion safely
+    dynamic startDateValue = map['startDate'];
+    dynamic endDateValue = map['endDate'];
+
+    Timestamp startDate;
+    Timestamp endDate;
+
+    if (startDateValue == null) {
+      startDate =
+          cloud_firestore.Timestamp.fromDate(DateTime.now()) as Timestamp;
+    } else {
+      startDate = startDateValue as Timestamp;
+    }
+
+    if (endDateValue == null) {
+      endDate = cloud_firestore.Timestamp.fromDate(DateTime.now()) as Timestamp;
+    } else {
+      endDate = endDateValue as Timestamp;
+    }
+
     return Exam(
       id: id,
       courseId: (map['courseId'] as String?) ?? '',
@@ -543,8 +564,8 @@ class Exam {
       title: (map['title'] as String?) ?? '',
       description: (map['description'] as String?) ?? '',
       durationMinutes: (map['durationMinutes'] as int?) ?? 60,
-      startDate: (map['startDate'] as Timestamp?) ?? map['startDate'],
-      endDate: (map['endDate'] as Timestamp?) ?? map['endDate'],
+      startDate: startDate,
+      endDate: endDate,
       createdAt: map['createdAt'] as Timestamp?,
     );
   }

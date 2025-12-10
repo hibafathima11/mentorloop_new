@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mentorloop_new/models/entities.dart' hide Timestamp;
 
@@ -28,7 +27,6 @@ class DataService {
     return _db
         .collection('users')
         .where('role', isEqualTo: 'student')
-       
         .snapshots()
         .map(
           (s) =>
@@ -70,7 +68,6 @@ class DataService {
   static Stream<List<Course>> watchAllCourses() {
     return _db
         .collection('courses')
-      
         .snapshots()
         .map((s) => s.docs.map((d) => Course.fromMap(d.id, d.data())).toList());
   }
@@ -79,7 +76,6 @@ class DataService {
     return _db
         .collection('courses')
         .where('studentIds', arrayContains: studentId)
-
         .snapshots()
         .map((s) => s.docs.map((d) => Course.fromMap(d.id, d.data())).toList());
   }
@@ -94,7 +90,6 @@ class DataService {
     return _db
         .collection('materials')
         .where('courseId', isEqualTo: courseId)
-
         .snapshots()
         .map(
           (s) =>
@@ -112,7 +107,6 @@ class DataService {
     return _db
         .collection('videos')
         .where('courseId', isEqualTo: courseId)
-     
         .snapshots()
         .map(
           (s) =>
@@ -205,7 +199,6 @@ class DataService {
     return _db
         .collection('assignments')
         .where('courseId', isEqualTo: courseId)
-   
         .snapshots()
         .map(
           (s) => s.docs.map((d) => Assignment.fromMap(d.id, d.data())).toList(),
@@ -223,7 +216,6 @@ class DataService {
     return _db
         .collection('submissions')
         .where('assignmentId', isEqualTo: assignmentId)
-
         .snapshots()
         .map(
           (s) => s.docs.map((d) => Submission.fromMap(d.id, d.data())).toList(),
@@ -250,7 +242,6 @@ class DataService {
     return _db
         .collection('doubts')
         .where('courseId', isEqualTo: courseId)
-        
         .snapshots()
         .map(
           (s) =>
@@ -287,7 +278,6 @@ class DataService {
     return _db
         .collection('parent_feedback')
         .where('teacherId', isEqualTo: teacherId)
-       
         .snapshots()
         .map(
           (s) => s.docs
@@ -308,7 +298,6 @@ class DataService {
     return _db
         .collection('attendance')
         .where('studentId', isEqualTo: studentId)
-     
         .snapshots()
         .map(
           (s) => s.docs
@@ -405,7 +394,7 @@ class DataService {
           .map((d) => ChatMessage.fromMap(d.id, d.data()))
           .where((m) => m.threadId == threadId)
           .toList();
-      
+
       if (lastRead != null && lastReadData != null) {
         final filtered = msgs.where((m) {
           if (m.createdAt == null) return false;
@@ -448,22 +437,23 @@ class DataService {
     return _db
         .collection('exams')
         .where('teacherId', isEqualTo: teacherId)
-
         .snapshots()
-        .map(
-          (s) => s.docs.map((d) => Exam.fromMap(d.id, d.data())).toList(),
-        );
+        .map((s) => s.docs.map((d) => Exam.fromMap(d.id, d.data())).toList());
   }
 
   static Stream<List<Exam>> watchCourseExams(String courseId) {
     return _db
         .collection('exams')
         .where('courseId', isEqualTo: courseId)
-    
         .snapshots()
-        .map(
-          (s) => s.docs.map((d) => Exam.fromMap(d.id, d.data())).toList(),
-        );
+        .map((s) => s.docs.map((d) => Exam.fromMap(d.id, d.data())).toList());
+  }
+
+  static Stream<List<Exam>> watchAllExams() {
+    return _db
+        .collection('exams')
+        .snapshots()
+        .map((s) => s.docs.map((d) => Exam.fromMap(d.id, d.data())).toList());
   }
 
   static Future<Exam?> getExam(String examId) async {
@@ -495,15 +485,20 @@ class DataService {
     return ref.id;
   }
 
-  static Future<void> updateExamAttempt(String attemptId, ExamAttempt attempt) async {
-    await _db.collection('exam_attempts').doc(attemptId).update(attempt.toMap());
+  static Future<void> updateExamAttempt(
+    String attemptId,
+    ExamAttempt attempt,
+  ) async {
+    await _db
+        .collection('exam_attempts')
+        .doc(attemptId)
+        .update(attempt.toMap());
   }
 
   static Stream<List<ExamAttempt>> watchStudentExamAttempts(String studentId) {
     return _db
         .collection('exam_attempts')
         .where('studentId', isEqualTo: studentId)
-       
         .snapshots()
         .map(
           (s) =>
@@ -515,6 +510,17 @@ class DataService {
     final doc = await _db.collection('exam_attempts').doc(attemptId).get();
     if (!doc.exists) return null;
     return ExamAttempt.fromMap(doc.id, doc.data()!);
+  }
+
+  static Stream<List<ExamAttempt>> watchExamAttempts(String examId) {
+    return _db
+        .collection('exam_attempts')
+        .where('examId', isEqualTo: examId)
+        .snapshots()
+        .map(
+          (s) =>
+              s.docs.map((d) => ExamAttempt.fromMap(d.id, d.data())).toList(),
+        );
   }
 
   static Future<ExamAttempt?> getStudentExamAttempt(
@@ -577,7 +583,10 @@ class DataService {
     await _db.collection('courses').doc(courseId).update(course.toMap());
   }
 
-  static Future<void> updateMaterial(String materialId, StudyMaterial material) async {
+  static Future<void> updateMaterial(
+    String materialId,
+    StudyMaterial material,
+  ) async {
     await _db.collection('materials').doc(materialId).update(material.toMap());
   }
 
@@ -585,16 +594,28 @@ class DataService {
     await _db.collection('videos').doc(videoId).update(video.toMap());
   }
 
-  static Future<void> updateAssignment(String assignmentId, Assignment assignment) async {
-    await _db.collection('assignments').doc(assignmentId).update(assignment.toMap());
+  static Future<void> updateAssignment(
+    String assignmentId,
+    Assignment assignment,
+  ) async {
+    await _db
+        .collection('assignments')
+        .doc(assignmentId)
+        .update(assignment.toMap());
   }
 
   static Future<void> updateExam(String examId, Exam exam) async {
     await _db.collection('exams').doc(examId).update(exam.toMap());
   }
 
-  static Future<void> updateSubmission(String submissionId, Submission submission) async {
-    await _db.collection('submissions').doc(submissionId).update(submission.toMap());
+  static Future<void> updateSubmission(
+    String submissionId,
+    Submission submission,
+  ) async {
+    await _db
+        .collection('submissions')
+        .doc(submissionId)
+        .update(submission.toMap());
   }
 
   static Future<void> removeStudentFromCourse(
