@@ -25,23 +25,12 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   Future<void> _loadLinkedStudent() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-    final studentData = await getLinkedStudentForParent(user.email ?? '');
-    // Get studentId from parent's user data
-    final guardianSnap = await FirebaseFirestore.instance
-        .collection('users')
-        .where('email', isEqualTo: user.email)
-        .limit(1)
-        .get();
     
-    String? studentId;
-    if (guardianSnap.docs.isNotEmpty) {
-      final guardianData = guardianSnap.docs.first.data();
-      studentId = guardianData['studentId'] as String?;
-    }
+    final result = await getLinkedStudentForParent(user.uid, user.email ?? '');
     
     setState(() {
-      _studentData = studentData;
-      _studentId = studentId;
+      _studentData = result['studentData'];
+      _studentId = result['studentId'];
       _loading = false;
     });
   }
@@ -399,26 +388,62 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 }
 
 // Logic to fetch linked student for parent
-Future<Map<String, dynamic>?> getLinkedStudentForParent(
+Future<Map<String, dynamic>> getLinkedStudentForParent(
+  String parentId,
   String parentEmail,
 ) async {
-  final guardianSnap = await FirebaseFirestore.instance
-      .collection('users')
-      .where('email', isEqualTo: parentEmail)
+  String? studentId;
+  
+  // First, check parent_links collection (for auto-linked or admin-approved parents)
+  final parentLinkDoc = await FirebaseFirestore.instance
+      .collection('parent_links')
+      .doc(parentId)
       .get();
+  
+  if (parentLinkDoc.exists) {
+    final linkData = parentLinkDoc.data();
+    studentId = linkData?['studentId'] as String?;
+  } else {
+    // If not found in parent_links, check guardians collection by email
+    final guardianSnap = await FirebaseFirestore.instance
+        .collection('guardians')
+        .where('email', isEqualTo: parentEmail.toLowerCase().trim())
+        .limit(1)
+        .get();
 
-  if (guardianSnap.docs.isEmpty) return null;
+    if (guardianSnap.docs.isNotEmpty) {
+      final guardianData = guardianSnap.docs.first.data();
+      studentId = guardianData['studentId'] as String?;
+      
+      // If found via guardian email, create the parent link for future use
+      if (studentId != null && studentId.isNotEmpty) {
+        await FirebaseFirestore.instance
+            .collection('parent_links')
+            .doc(parentId)
+            .set({
+              'parentId': parentId,
+              'studentId': studentId,
+              'linkedAt': FieldValue.serverTimestamp(),
+              'linkedVia': 'guardian_email',
+            });
+      }
+    }
+  }
 
-  final guardianData = guardianSnap.docs.first.data();
-  final studentId = guardianData['studentId'];
+  if (studentId == null || studentId.isEmpty) {
+    return {'studentData': null, 'studentId': null};
+  }
 
+  // Fetch student data
   final studentSnap = await FirebaseFirestore.instance
       .collection('users')
       .doc(studentId)
       .get();
 
-  if (!studentSnap.exists) return null;
+  if (!studentSnap.exists) {
+    return {'studentData': null, 'studentId': null};
+  }
 
   final studentData = studentSnap.data();
-  return studentData;
+  return {'studentData': studentData, 'studentId': studentId};
 }

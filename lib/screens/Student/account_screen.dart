@@ -577,22 +577,34 @@ class _AccountScreenState extends State<AccountScreen> {
                   children: [
                     TextField(
                       controller: relationController,
-                      decoration: const InputDecoration(labelText: 'Relation'),
+                      decoration: const InputDecoration(
+                        labelText: 'Relation *',
+                        hintText: 'e.g., Father, Mother, Guardian',
+                      ),
                     ),
+                    const SizedBox(height: 8),
                     TextField(
                       controller: nameController,
-                      decoration: const InputDecoration(labelText: 'Name'),
+                      decoration: const InputDecoration(
+                        labelText: 'Name *',
+                      ),
                     ),
+                    const SizedBox(height: 8),
                     TextField(
                       controller: phoneController,
                       decoration: const InputDecoration(
-                        labelText: 'Phone Number',
+                        labelText: 'Phone Number *',
                       ),
                       keyboardType: TextInputType.phone,
                     ),
+                    const SizedBox(height: 8),
                     TextField(
                       controller: emailController,
-                      decoration: const InputDecoration(labelText: 'Email'),
+                      decoration: const InputDecoration(
+                        labelText: 'Email *',
+                        hintText: 'Parent will use this email to register',
+                        helperText: 'Parent can register with this email to auto-link',
+                      ),
                       keyboardType: TextInputType.emailAddress,
                     ),
                   ],
@@ -607,27 +619,92 @@ class _AccountScreenState extends State<AccountScreen> {
                   onPressed: isLoading
                       ? null
                       : () async {
+                          // Validate required fields
+                          if (relationController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter relation'),
+                              ),
+                            );
+                            return;
+                          }
+                          if (nameController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter name'),
+                              ),
+                            );
+                            return;
+                          }
+                          if (phoneController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter phone number'),
+                              ),
+                            );
+                            return;
+                          }
+                          final email = emailController.text.trim().toLowerCase();
+                          if (email.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter email'),
+                              ),
+                            );
+                            return;
+                          }
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                              .hasMatch(email)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter a valid email'),
+                              ),
+                            );
+                            return;
+                          }
+
                           setState(() => isLoading = true);
                           final user = FirebaseAuth.instance.currentUser;
-                          if (user == null) return;
-                          final guardianData = {
-                            'studentId': user.uid,
-                            'relation': relationController.text.trim(),
-                            'name': nameController.text.trim(),
-                            'phone': phoneController.text.trim(),
-                            'email': emailController.text.trim(),
-                            'createdAt': DateTime.now(),
-                          };
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .add(guardianData);
-                          setState(() => isLoading = false);
-                          if (context.mounted) Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Guardian details saved'),
-                            ),
-                          );
+                          if (user == null) {
+                            setState(() => isLoading = false);
+                            return;
+                          }
+                          
+                          try {
+                            final guardianData = {
+                              'studentId': user.uid,
+                              'relation': relationController.text.trim(),
+                              'name': nameController.text.trim(),
+                              'phone': phoneController.text.trim(),
+                              'email': email,
+                              'createdAt': FieldValue.serverTimestamp(),
+                            };
+                            await FirebaseFirestore.instance
+                                .collection('guardians')
+                                .add(guardianData);
+                            
+                            setState(() => isLoading = false);
+                            if (context.mounted) Navigator.pop(context);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Guardian details saved. Parent can now register with this email to auto-link.',
+                                  ),
+                                  duration: Duration(seconds: 4),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            setState(() => isLoading = false);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error saving: $e'),
+                                ),
+                              );
+                            }
+                          }
                         },
                   child: isLoading
                       ? const SizedBox(

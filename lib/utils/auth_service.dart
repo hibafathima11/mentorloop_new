@@ -193,6 +193,54 @@ class AuthService {
     });
   }
 
+  /// Check if parent email matches a guardian email and auto-link them to student
+  static Future<String?> autoLinkParentToStudent(String parentEmail) async {
+    try {
+      // Check if parent email exists in guardians collection
+      final guardianSnap = await _db
+          .collection('guardians')
+          .where('email', isEqualTo: parentEmail.toLowerCase().trim())
+          .limit(1)
+          .get();
+
+      if (guardianSnap.docs.isEmpty) {
+        return null; // No guardian found with this email
+      }
+
+      final guardianData = guardianSnap.docs.first.data();
+      final studentId = guardianData['studentId'] as String?;
+
+      if (studentId == null || studentId.isEmpty) {
+        return null; // No student ID found
+      }
+
+      // Verify student exists
+      final studentDoc = await _db.collection('users').doc(studentId).get();
+      if (!studentDoc.exists) {
+        return null; // Student doesn't exist
+      }
+
+      // Get parent user ID from current user
+      final parentUser = _auth.currentUser;
+      if (parentUser == null) {
+        return null; // Not authenticated
+      }
+
+      // Create parent-student link
+      await _db.collection('parent_links').doc(parentUser.uid).set({
+        'parentId': parentUser.uid,
+        'studentId': studentId,
+        'linkedAt': FieldValue.serverTimestamp(),
+        'linkedVia': 'guardian_email', // Track how it was linked
+      });
+
+      return studentId;
+    } catch (e) {
+      // Return null on error - don't block registration
+      return null;
+    }
+  }
+
   static Future<Map<String, dynamic>> issueTeacherCredentials(
     String email,
     String tempPassword,

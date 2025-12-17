@@ -5,6 +5,7 @@ import 'package:mentorloop_new/utils/colors.dart';
 import 'package:mentorloop_new/utils/auth_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:mentorloop_new/utils/cloudinary_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 
 class SignupScreen extends StatefulWidget {
@@ -49,17 +50,7 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // If parent, ensure student email and ID are provided
-      if (_selectedRole == 'parent') {
-        if (_studentEmailController.text.trim().isEmpty) {
-          throw Exception('Please enter your student\'s email');
-        }
-        if (_parentIdFile == null) {
-          throw Exception('Please upload the student ID');
-        }
-      }
-
-      // Create account
+      // Create account first
       final cred = await AuthService.registerWithEmail(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
@@ -68,24 +59,46 @@ class _SignupScreenState extends State<SignupScreen> {
         role: _selectedRole,
       );
 
-      // If parent, upload ID (if not already) and create verification request
+      // If parent, try to auto-link via guardian email, otherwise create verification request
       if (_selectedRole == 'parent') {
-        String idUrl = _parentIdUploadUrl ?? '';
-        if (idUrl.isEmpty &&
-            _parentIdFile != null &&
-            _parentIdFile!.path != null) {
-          idUrl = await CloudinaryService.uploadFile(
-            file: File(_parentIdFile!.path!),
-            resourceType: 'auto',
-          );
-          _parentIdUploadUrl = idUrl;
-        }
-        await AuthService.createParentVerificationRequest(
-          parentId: cred.user!.uid,
-          parentEmail: _emailController.text.trim(),
-          studentEmail: _studentEmailController.text.trim(),
-          idUrl: idUrl,
+        // First, try to auto-link if parent email matches a guardian email
+        final linkedStudentId = await AuthService.autoLinkParentToStudent(
+          _emailController.text.trim(),
         );
+
+        if (linkedStudentId == null) {
+          // No auto-link found, require student email and ID for verification request
+          if (_studentEmailController.text.trim().isEmpty) {
+            throw Exception('Please enter your student\'s email');
+          }
+          if (_parentIdFile == null) {
+            throw Exception('Please upload the student ID');
+          }
+          
+          // Proceed with verification request (using student email)
+          String idUrl = _parentIdUploadUrl ?? '';
+          if (idUrl.isEmpty &&
+              _parentIdFile != null &&
+              _parentIdFile!.path != null) {
+            idUrl = await CloudinaryService.uploadFile(
+              file: File(_parentIdFile!.path!),
+              resourceType: 'auto',
+            );
+            _parentIdUploadUrl = idUrl;
+          }
+          await AuthService.createParentVerificationRequest(
+            parentId: cred.user!.uid,
+            parentEmail: _emailController.text.trim(),
+            studentEmail: _studentEmailController.text.trim(),
+            idUrl: idUrl,
+          );
+        } else {
+          // Auto-linked successfully - approve parent immediately
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(cred.user!.uid)
+              .update({'approved': true});
+        }
       }
 
       // Sign out to require explicit login afterwards
@@ -445,6 +458,33 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                           ),
                           Container(
+                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blue[200]!),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.info_outline, 
+                                  color: Colors.blue[700], 
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'If your email matches a guardian email provided by your child, you will be auto-linked. Otherwise, please provide student email and ID below.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.blue[900],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(
@@ -464,14 +504,12 @@ class _SignupScreenState extends State<SignupScreen> {
                               controller: _studentEmailController,
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
+                                // Student email is optional - will be required only if auto-link fails
                                 if (_selectedRole != 'parent') return null;
-                                if (value == null || value.isEmpty) {
-                                  return 'Student email is required for parents';
-                                }
                                 return null;
                               },
                               decoration: InputDecoration(
-                                labelText: "Student Email",
+                                labelText: "Student Email (if auto-link fails)",
                                 hintText: "student@email.com",
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
@@ -527,7 +565,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 Expanded(
                                   child: Text(
                                     _parentIdFile?.name ??
-                                        'Upload Student ID (image/pdf)',
+                                        'Upload Student ID (if auto-link fails)',
                                     style: TextStyle(color: Colors.grey[700]),
                                     overflow: TextOverflow.ellipsis,
                                   ),
