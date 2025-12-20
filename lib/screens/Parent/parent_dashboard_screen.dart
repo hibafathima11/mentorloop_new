@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mentorloop_new/screens/Common/login_screen.dart';
 import 'package:mentorloop_new/screens/Parent/child_progress_screen.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
@@ -25,9 +26,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   Future<void> _loadLinkedStudent() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-    
+
     final result = await getLinkedStudentForParent(user.uid, user.email ?? '');
-    
+
     setState(() {
       _studentData = result['studentData'];
       _studentId = result['studentId'];
@@ -47,6 +48,19 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const LoginScreen(),
+                ),
+              );
+            },
+            icon: Icon(Icons.logout),
+          ),
+        ],
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -220,7 +234,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       child: ListTile(
         tileColor: const Color(0xFFE3F2FD),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: const Icon(Icons.trending_up, color: Color(0xFF8B5E3C), size: 36),
+        leading: const Icon(
+          Icons.trending_up,
+          color: Color(0xFF8B5E3C),
+          size: 36,
+        ),
         title: const Text(
           'View Progress',
           style: TextStyle(
@@ -247,7 +265,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ChildProgressScreen(studentId: _studentId!),
+                  builder: (context) =>
+                      ChildProgressScreen(studentId: _studentId!),
                 ),
               );
             }
@@ -393,13 +412,13 @@ Future<Map<String, dynamic>> getLinkedStudentForParent(
   String parentEmail,
 ) async {
   String? studentId;
-  
+
   // First, check parent_links collection (for auto-linked or admin-approved parents)
   final parentLinkDoc = await FirebaseFirestore.instance
       .collection('parent_links')
       .doc(parentId)
       .get();
-  
+
   if (parentLinkDoc.exists) {
     final linkData = parentLinkDoc.data();
     studentId = linkData?['studentId'] as String?;
@@ -414,7 +433,7 @@ Future<Map<String, dynamic>> getLinkedStudentForParent(
     if (guardianSnap.docs.isNotEmpty) {
       final guardianData = guardianSnap.docs.first.data();
       studentId = guardianData['studentId'] as String?;
-      
+
       // If found via guardian email, create the parent link for future use
       if (studentId != null && studentId.isNotEmpty) {
         await FirebaseFirestore.instance
