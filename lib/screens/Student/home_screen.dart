@@ -283,7 +283,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {  Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const CourseScreen(),
+      ),
+    );},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF9800), // Orange
                     foregroundColor: Colors.white,

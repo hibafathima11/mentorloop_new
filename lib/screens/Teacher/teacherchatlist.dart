@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-// ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
-import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mentorloop_new/utils/responsive.dart';
@@ -11,7 +9,6 @@ class TeacherChatListScreen extends StatelessWidget {
   Future<List<Map<String, dynamic>>> _fetchStudentsForTeacher(
     String teacherId,
   ) async {
-    // Get courses taught by this teacher
     final coursesSnap = await FirebaseFirestore.instance
         .collection('courses')
         .where('teacherId', isEqualTo: teacherId)
@@ -23,14 +20,16 @@ class TeacherChatListScreen extends StatelessWidget {
       studentIds.addAll(ids);
     }
 
-    // Get student profiles
     if (studentIds.isEmpty) return [];
+
     final studentsSnap = await FirebaseFirestore.instance
         .collection('users')
         .where(FieldPath.documentId, whereIn: studentIds.toList())
         .get();
 
-    return studentsSnap.docs.map((d) => {...d.data(), 'uid': d.id}).toList();
+    return studentsSnap.docs
+        .map((d) => {...d.data(), 'uid': d.id})
+        .toList();
   }
 
   Future<Map<String, dynamic>?> _fetchAdmin() async {
@@ -39,6 +38,7 @@ class TeacherChatListScreen extends StatelessWidget {
         .where('role', isEqualTo: 'admin')
         .limit(1)
         .get();
+
     if (adminSnap.docs.isEmpty) return null;
     return {...adminSnap.docs.first.data(), 'uid': adminSnap.docs.first.id};
   }
@@ -46,9 +46,13 @@ class TeacherChatListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final teacherId = FirebaseAuth.instance.currentUser?.uid;
+
     if (teacherId == null) {
-      return const Scaffold(body: Center(child: Text('Not logged in')));
+      return const Scaffold(
+        body: Center(child: Text('Not logged in')),
+      );
     }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F3EF),
       appBar: AppBar(
@@ -65,14 +69,28 @@ class TeacherChatListScreen extends StatelessWidget {
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _fetchStudentsForTeacher(teacherId),
         builder: (context, studentSnap) {
+          if (studentSnap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (studentSnap.hasError) {
+            return const Center(child: Text('Failed to load students'));
+          }
+
           return FutureBuilder<Map<String, dynamic>?>(
             future: _fetchAdmin(),
             builder: (context, adminSnap) {
-              if (!studentSnap.hasData || !adminSnap.hasData) {
+              if (adminSnap.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              final students = studentSnap.data!;
+
+              if (adminSnap.hasError) {
+                return const Center(child: Text('Failed to load admin'));
+              }
+
+              final students = studentSnap.data ?? [];
               final admin = adminSnap.data;
+
               final chatList = [
                 if (admin != null)
                   {
@@ -84,14 +102,19 @@ class TeacherChatListScreen extends StatelessWidget {
                   },
                 ...students,
               ];
+
               if (chatList.isEmpty) {
-                return const Center(child: Text('No students or admin found.'));
+                return const Center(
+                  child: Text('No students or admin found'),
+                );
               }
+
               return ListView.builder(
                 padding: ResponsiveHelper.getResponsivePaddingAll(context),
                 itemCount: chatList.length,
                 itemBuilder: (context, index) {
                   final user = chatList[index];
+
                   return Card(
                     margin: EdgeInsets.only(
                       bottom: ResponsiveHelper.getResponsiveMargin(
@@ -108,22 +131,24 @@ class TeacherChatListScreen extends StatelessWidget {
                     ),
                     child: ListTile(
                       leading: CircleAvatar(
-                        radius: ResponsiveHelper.getResponsiveIconSize(context) / 2,
+                        radius:
+                            ResponsiveHelper.getResponsiveIconSize(context) /
+                                2,
                         backgroundColor: Colors.white,
                         backgroundImage:
                             user['photoUrl'] != null &&
-                                (user['photoUrl'] as String).isNotEmpty
-                            ? NetworkImage(user['photoUrl'])
-                            : null,
-                        child:
-                            (user['photoUrl'] == null ||
+                                    (user['photoUrl'] as String).isNotEmpty
+                                ? NetworkImage(user['photoUrl'])
+                                : null,
+                        child: (user['photoUrl'] == null ||
                                 (user['photoUrl'] as String).isEmpty)
                             ? Icon(
                                 user['role'] == 'admin'
                                     ? Icons.admin_panel_settings
                                     : Icons.person,
                                 color: const Color(0xFF8B5E3C),
-                                size: ResponsiveHelper.getResponsiveIconSize(context),
+                                size: ResponsiveHelper.getResponsiveIconSize(
+                                    context),
                               )
                             : null,
                       ),
@@ -132,29 +157,24 @@ class TeacherChatListScreen extends StatelessWidget {
                         style: TextStyle(
                           color: const Color(0xFF8B5E3C),
                           fontWeight: FontWeight.w600,
-                          fontSize: ResponsiveHelper.getResponsiveFontSize(
-                            context,
-                            mobile: 16,
-                            tablet: 18,
-                            desktop: 20,
-                          ),
+                          fontSize:
+                              ResponsiveHelper.getResponsiveFontSize(context,
+                                  mobile: 16, tablet: 18, desktop: 20),
                         ),
                       ),
                       subtitle: Text(
                         user['email'] ?? '',
                         style: TextStyle(
-                          fontSize: ResponsiveHelper.getResponsiveFontSize(
-                            context,
-                            mobile: 14,
-                            tablet: 16,
-                            desktop: 18,
-                          ),
+                          fontSize:
+                              ResponsiveHelper.getResponsiveFontSize(context,
+                                  mobile: 14, tablet: 16, desktop: 18),
                         ),
                       ),
                       trailing: Icon(
                         Icons.arrow_forward_ios,
                         color: const Color(0xFF8B5E3C),
-                        size: ResponsiveHelper.getResponsiveIconSize(context),
+                        size:
+                            ResponsiveHelper.getResponsiveIconSize(context),
                       ),
                       onTap: () {
                         Navigator.push(
@@ -162,7 +182,8 @@ class TeacherChatListScreen extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (_) => TeacherChatRoomScreen(
                               otherUserId: user['uid'],
-                              otherUserName: user['name'] ?? user['email'] ?? '',
+                              otherUserName:
+                                  user['name'] ?? user['email'] ?? '',
                               otherUserPhoto: user['photoUrl'] ?? '',
                             ),
                           ),
@@ -269,14 +290,23 @@ class _TeacherChatRoomScreenState extends State<TeacherChatRoomScreen> {
                 final List messages = qs?.docs ?? const [];
                 // Sort messages by timestamp in client-side
                 messages.sort((a, b) {
-                  final aData = (a.data() as Map<String, dynamic>?)?['timestamp'];
-                  final bData = (b.data() as Map<String, dynamic>?)?['timestamp'];
-                  if (aData == null && bData == null) return 0;
-                  if (aData == null) return 1;
-                  if (bData == null) return -1;
-                  return (aData as firestore.Timestamp).millisecondsSinceEpoch
-                      .compareTo((bData as firestore.Timestamp).millisecondsSinceEpoch);
-                });
+  final aMap = a.data() as Map<String, dynamic>;
+  final bMap = b.data() as Map<String, dynamic>;
+
+  final aTs = aMap['timestamp'];
+  final bTs = bMap['timestamp'];
+
+  // Handle missing timestamps safely
+  if (aTs == null && bTs == null) return 0;
+  if (aTs == null) return 1;
+  if (bTs == null) return -1;
+
+  final aTime = (aTs as Timestamp).millisecondsSinceEpoch;
+  final bTime = (bTs as Timestamp).millisecondsSinceEpoch;
+
+  return aTime.compareTo(bTime);
+});
+
                 return ListView.builder(
                   padding: ResponsiveHelper.getResponsivePaddingAll(context),
                   itemCount: messages.length,
