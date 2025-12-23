@@ -248,7 +248,17 @@ class _CourseVideoScreenState extends State<CourseVideoScreen> {
       ),
       body: Column(
         children: [
-          if (_controller.value.isInitialized)
+          if (_controller.value.hasError)
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Center(
+                child: Text(
+                  'Error loading video: ${_controller.value.errorDescription}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            )
+          else if (_controller.value.isInitialized)
             AspectRatio(
               aspectRatio: _controller.value.aspectRatio,
               child: NonSkippableVideoPlayer(

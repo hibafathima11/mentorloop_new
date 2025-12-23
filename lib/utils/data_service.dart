@@ -349,12 +349,17 @@ class DataService {
     return _db
         .collection('chat_messages')
         .where('threadId', isEqualTo: threadId)
-        .orderBy('createdAt')
         .snapshots()
         .map(
           (s) => s.docs
               .map((d) => ChatMessage.fromMap(d.id, d.data()))
-              .toList(),
+              .toList()
+            ..sort((a, b) {
+              if (a.createdAt == null && b.createdAt == null) return 0;
+              if (a.createdAt == null) return 1;
+              if (b.createdAt == null) return -1;
+              return a.createdAt!.compareTo(b.createdAt!);
+            }),
         );
   }
 
