@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mentorloop_new/web/screens/admin_dashboard_container.dart';
+import 'package:mentorloop_new/screens/Admin/admin_dashboard_screen.dart';
+
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -34,7 +35,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const AdminDashboardContainer(),
+          builder: (context) => const AdminDashboardScreen(),
         ),
       );
       if (mounted) setState(() => _isLoading = false);
@@ -50,7 +51,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const AdminDashboardContainer(),
+          builder: (context) => const AdminDashboardScreen(),
         ),
       );
     } on FirebaseAuthException catch (e) {

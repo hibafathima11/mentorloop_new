@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mentorloop_new/utils/responsive.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mentorloop_new/utils/responsive.dart';
 
 class UsersManagementScreen extends StatefulWidget {
   const UsersManagementScreen({super.key});
@@ -10,47 +10,10 @@ class UsersManagementScreen extends StatefulWidget {
 }
 
 class _UsersManagementScreenState extends State<UsersManagementScreen> {
-  final _searchController = TextEditingController();
-  String _selectedRole = 'All';
-  String _selectedStatus = 'All';
-
-  List<Map<String, dynamic>> _filterUsers(List<Map<String, dynamic>> users) {
-    return users.where((user) {
-      final nameMatch = (user['name'] ?? '')
-          .toLowerCase()
-          .contains(_searchController.text.toLowerCase());
-      final emailMatch = (user['email'] ?? '')
-          .toLowerCase()
-          .contains(_searchController.text.toLowerCase());
-      final roleMatch =
-          _selectedRole == 'All' || user['role'] == _selectedRole;
-      final statusMatch =
-          _selectedStatus == 'All' || user['status'] == _selectedStatus;
-      return (nameMatch || emailMatch) && roleMatch && statusMatch;
-    }).toList();
-  }
-
-  String _getAvatar(String role) {
-    switch (role.toLowerCase()) {
-      case 'teacher':
-        return '👩‍🏫';
-      case 'parent':
-        return '👩';
-      case 'student':
-        return '👤';
-      default:
-        return '👤';
-    }
-  }
-
-  String _formatDate(dynamic timestamp) {
-    if (timestamp == null) return 'N/A';
-    if (timestamp is Timestamp) {
-      final date = timestamp.toDate();
-      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    }
-    return timestamp.toString();
-  }
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _selectedRole = 'all';
+  String _selectedStatus = 'all';
 
   @override
   void dispose() {
@@ -60,328 +23,506 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = ResponsiveHelper.isMobile(context);
-
-    return SingleChildScrollView(
+    return Padding(
       padding: ResponsiveHelper.getResponsivePaddingAll(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with search and filters
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              SizedBox(
-                width: isMobile ? double.infinity : 300,
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: 'Search users...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-              DropdownButton<String>(
-                value: _selectedRole,
-                items: ['All', 'Student', 'Teacher', 'Parent']
-                    .map((role) => DropdownMenuItem(
-                          value: role,
-                          child: Text(role),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _selectedRole = value);
-                  }
-                },
-              ),
-              DropdownButton<String>(
-                value: _selectedStatus,
-                items: ['All', 'Active', 'Inactive', 'Pending']
-                    .map((status) => DropdownMenuItem(
-                          value: status,
-                          child: Text(status),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _selectedStatus = value);
-                  }
-                },
-              ),
-              // Removed Add User button - admin view only
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Users Table
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('users')
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(48.0),
-                  child: const Center(child: CircularProgressIndicator()),
-                );
-              }
-
-              if (snapshot.hasError) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(48.0),
-                  child: Center(
-                    child: Text(
-                      'Error loading users: ${snapshot.error}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.red[600],
-                      ),
-                    ),
-                  ),
-                );
-              }
-
-              final users = snapshot.data?.docs.map((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                final role = (data['role'] ?? 'user').toString();
-                final approved = data['approved'] as bool? ?? false;
-                final status = approved ? 'Active' : 'Pending';
-                
-                return {
-                  'id': doc.id,
-                  'name': data['name'] ?? 'Unknown',
-                  'email': data['email'] ?? 'No email',
-                  'role': role.substring(0, 1).toUpperCase() + role.substring(1),
-                  'status': status,
-                  'joinDate': _formatDate(data['createdAt']),
-                  'avatar': _getAvatar(role),
-                };
-              }).toList() ?? [];
-
-              final filteredUsers = _filterUsers(users);
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: filteredUsers.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(48.0),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.people_outline,
-                                size: 64,
-                                color: Colors.grey[300],
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No users found',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : SingleChildScrollView(
-                        scrollDirection: isMobile ? Axis.horizontal : Axis.vertical,
-                        child: SizedBox(
-                          width: isMobile ? 800 : double.infinity,
-                          child: DataTable(
-                            columns: const [
-                              DataColumn(
-                                label: Text(
-                                  'Name',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  'Email',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  'Role',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  'Status',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  'Join Date',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                            rows: filteredUsers
-                                .map(
-                                  (user) => DataRow(
-                                    cells: [
-                                      DataCell(
-                                        Row(
-                                          children: [
-                                            Container(
-                                              width: 32,
-                                              height: 32,
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: const Color(0xFF8B5E3C)
-                                                    .withValues(alpha: 0.1),
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  user['avatar'],
-                                                  style: const TextStyle(fontSize: 16),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Flexible(
-                                              child: Text(
-                                                user['name'],
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Flexible(
-                                          child: Text(
-                                            user['email'],
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: _getRoleColor(user['role'])
-                                                .withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            user['role'],
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              color: _getRoleColor(user['role']),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: _getStatusColor(user['status'])
-                                                .withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            user['status'],
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              color: _getStatusColor(user['status']),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      DataCell(Text(user['joinDate'])),
-                                    ],
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                        ),
-                      ),
-              );
-            },
+          _buildHeader(),
+          const SizedBox(height: 20),
+          _buildFilters(),
+          const SizedBox(height: 20),
+          Expanded(
+            child: _buildUsersList(),
           ),
         ],
       ),
     );
   }
 
-  Color _getRoleColor(String role) {
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          'Users Management',
+          style: TextStyle(
+            fontSize: ResponsiveHelper.getResponsiveFontSize(
+              context,
+              mobile: 24,
+              tablet: 28,
+              desktop: 32,
+            ),
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        ElevatedButton.icon(
+          onPressed: () => _showAddUserDialog(),
+          icon: const Icon(Icons.add),
+          label: const Text('Add User'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF8B5E3C),
+            foregroundColor: Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilters() {
+    return Container(
+      padding: ResponsiveHelper.getResponsivePaddingAll(context),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildSearchBar(),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildRoleFilter(),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatusFilter(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) => setState(() => _searchQuery = value),
+        decoration: InputDecoration(
+          hintText: 'Search users by name or email...',
+          prefixIcon: const Icon(Icons.search),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoleFilter() {
+    return DropdownButtonFormField<String>(
+      value: _selectedRole,
+      decoration: const InputDecoration(
+        labelText: 'Role',
+        border: OutlineInputBorder(),
+      ),
+      items: const [
+        DropdownMenuItem(value: 'all', child: Text('All Roles')),
+        DropdownMenuItem(value: 'student', child: Text('Student')),
+        DropdownMenuItem(value: 'teacher', child: Text('Teacher')),
+        DropdownMenuItem(value: 'parent', child: Text('Parent')),
+        DropdownMenuItem(value: 'admin', child: Text('Admin')),
+      ],
+      onChanged: (value) {
+        if (value != null) {
+          setState(() => _selectedRole = value);
+        }
+      },
+    );
+  }
+
+  Widget _buildStatusFilter() {
+    return DropdownButtonFormField<String>(
+      value: _selectedStatus,
+      decoration: const InputDecoration(
+        labelText: 'Status',
+        border: OutlineInputBorder(),
+      ),
+      items: const [
+        DropdownMenuItem(value: 'all', child: Text('All Status')),
+        DropdownMenuItem(value: 'approved', child: Text('Approved')),
+        DropdownMenuItem(value: 'pending', child: Text('Pending')),
+        DropdownMenuItem(value: 'suspended', child: Text('Suspended')),
+      ],
+      onChanged: (value) {
+        if (value != null) {
+          setState(() => _selectedStatus = value);
+        }
+      },
+    );
+  }
+
+  Widget _buildUsersList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _getFilteredUsersStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading users: ${snapshot.error}',
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
+        }
+
+        final users = snapshot.data?.docs ?? [];
+        
+        if (users.isEmpty) {
+          return const Center(
+            child: Text(
+              'No users found',
+              style: TextStyle(color: Colors.grey),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: users.length,
+          itemBuilder: (context, index) {
+            final doc = users[index];
+            final data = doc.data() as Map<String, dynamic>;
+            
+            return _buildUserCard(doc.id, data);
+          },
+        );
+      },
+    );
+  }
+
+  Stream<QuerySnapshot> _getFilteredUsersStream() {
+    Query query = FirebaseFirestore.instance.collection('users');
+    
+    // Apply role filter
+    if (_selectedRole != 'all') {
+      query = query.where('role', isEqualTo: _selectedRole);
+    }
+    
+    // Apply status filter
+    if (_selectedStatus != 'all') {
+      if (_selectedStatus == 'approved') {
+        query = query.where('approved', isEqualTo: true);
+      } else if (_selectedStatus == 'pending') {
+        query = query.where('approved', isEqualTo: false);
+      } else if (_selectedStatus == 'suspended') {
+        query = query.where('suspended', isEqualTo: true);
+      }
+    }
+    
+    return query.orderBy('createdAt', descending: true).snapshots();
+  }
+
+  Widget _buildUserCard(String userId, Map<String, dynamic> userData) {
+    final name = userData['name'] as String? ?? 'Unknown';
+    final email = userData['email'] as String? ?? '';
+    final role = userData['role'] as String? ?? 'user';
+    final approved = userData['approved'] as bool? ?? false;
+    final suspended = userData['suspended'] as bool? ?? false;
+    final photoUrl = userData['photoUrl'] as String? ?? '';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: const Color(0xFF8B5E3C),
+          backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+          child: photoUrl.isEmpty
+              ? Text(
+                  name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                )
+              : null,
+        ),
+        title: Text(
+          name,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(email),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                _buildRoleChip(role),
+                const SizedBox(width: 8),
+                _buildStatusChip(approved, suspended),
+              ],
+            ),
+          ],
+        ),
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) => _handleUserAction(value, userId, userData),
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'view',
+              child: ListTile(
+                leading: Icon(Icons.visibility),
+                title: Text('View Details'),
+                dense: true,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'edit',
+              child: ListTile(
+                leading: Icon(Icons.edit),
+                title: Text('Edit'),
+                dense: true,
+              ),
+            ),
+            if (!approved)
+              const PopupMenuItem(
+                value: 'approve',
+                child: ListTile(
+                  leading: Icon(Icons.check_circle),
+                  title: Text('Approve'),
+                  dense: true,
+                ),
+              ),
+            if (approved)
+              const PopupMenuItem(
+                value: 'suspend',
+                child: ListTile(
+                  leading: Icon(Icons.block),
+                  title: Text('Suspend'),
+                  dense: true,
+                ),
+              ),
+            const PopupMenuItem(
+              value: 'delete',
+              child: ListTile(
+                leading: Icon(Icons.delete, color: Colors.red),
+                title: Text('Delete', style: TextStyle(color: Colors.red)),
+                dense: true,
+              ),
+            ),
+          ],
+        ),
+        onTap: () => _showUserDetails(userId, userData),
+      ),
+    );
+  }
+
+  Widget _buildRoleChip(String role) {
+    Color color;
     switch (role) {
-      case 'Teacher':
-        return const Color(0xFF6B9D5C);
-      case 'Parent':
-        return const Color(0xFF5B7DB9);
-      case 'Student':
-        return const Color(0xFF8B5E3C);
+      case 'admin':
+        color = Colors.red;
+        break;
+      case 'teacher':
+        color = Colors.blue;
+        break;
+      case 'parent':
+        color = Colors.green;
+        break;
       default:
-        return Colors.grey;
+        color = Colors.orange;
+    }
+
+    return Chip(
+      label: Text(
+        role.toUpperCase(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      backgroundColor: color,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+
+  Widget _buildStatusChip(bool approved, bool suspended) {
+    if (suspended) {
+      return const Chip(
+        label: Text(
+          'SUSPENDED',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.red,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      );
+    } else if (approved) {
+      return const Chip(
+        label: Text(
+          'APPROVED',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.green,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      );
+    } else {
+      return const Chip(
+        label: Text(
+          'PENDING',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.orange,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      );
     }
   }
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'Active':
-        return Colors.green;
-      case 'Inactive':
-        return Colors.red;
-      case 'Pending':
-        return Colors.orange;
-      default:
-        return Colors.grey;
+  void _handleUserAction(String action, String userId, Map<String, dynamic> userData) {
+    switch (action) {
+      case 'view':
+        _showUserDetails(userId, userData);
+        break;
+      case 'edit':
+        _showEditUserDialog(userId, userData);
+        break;
+      case 'approve':
+        _approveUser(userId);
+        break;
+      case 'suspend':
+        _suspendUser(userId);
+        break;
+      case 'delete':
+        _deleteUser(userId);
+        break;
+    }
+  }
+
+  void _showUserDetails(String userId, Map<String, dynamic> userData) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('User Details'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Name: ${userData['name'] ?? 'N/A'}'),
+            Text('Email: ${userData['email'] ?? 'N/A'}'),
+            Text('Role: ${userData['role'] ?? 'N/A'}'),
+            Text('Phone: ${userData['phone'] ?? 'N/A'}'),
+            Text('Approved: ${userData['approved'] == true ? 'Yes' : 'No'}'),
+            Text('Created: ${userData['createdAt'] != null ? (userData['createdAt'] as Timestamp).toDate().toString() : 'N/A'}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditUserDialog(String userId, Map<String, dynamic> userData) {
+    // Implementation for editing user
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Edit user functionality coming soon')),
+    );
+  }
+
+  void _showAddUserDialog() {
+    // Implementation for adding user
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Add user functionality coming soon')),
+    );
+  }
+
+  Future<void> _approveUser(String userId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update({'approved': true});
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User approved successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error approving user: $e')),
+      );
+    }
+  }
+
+  Future<void> _suspendUser(String userId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update({'suspended': true});
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User suspended successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error suspending user: $e')),
+      );
+    }
+  }
+
+  Future<void> _deleteUser(String userId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete User'),
+        content: const Text('Are you sure you want to delete this user?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .delete();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User deleted successfully')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting user: $e')),
+        );
+      }
     }
   }
 }
