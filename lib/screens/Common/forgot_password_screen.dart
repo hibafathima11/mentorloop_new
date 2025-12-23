@@ -29,20 +29,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Check if email exists
-      final emailExists = await AuthService.emailExists(_emailController.text.trim());
-      if (!emailExists) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No account found with this email address'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        setState(() => _isLoading = false);
-        return;
-      }
-
       // Send password reset email
       await AuthService.sendPasswordResetEmail(_emailController.text.trim());
       

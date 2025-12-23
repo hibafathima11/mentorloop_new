@@ -12,12 +12,14 @@ class CourseVideoScreen extends StatefulWidget {
   final String videoUrl;
   final int durationSeconds;
   final String title;
+  final String teacherId;
   const CourseVideoScreen({
     super.key,
     required this.videoId,
     required this.videoUrl,
     required this.durationSeconds,
     required this.title,
+    required this.teacherId,
   });
 
   @override
@@ -158,9 +160,70 @@ class _CourseVideoScreenState extends State<CourseVideoScreen> {
     super.dispose();
   }
 
+  Future<bool> _onWillPop() async {
+    final reasonController = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Why are you exiting?'),
+        content: TextField(
+          controller: reasonController,
+          decoration: const InputDecoration(
+            hintText: 'Please provide a reason...',
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final reason = reasonController.text.trim();
+              if (reason.isNotEmpty) {
+                await _sendReasonToTeacher(reason);
+              }
+              Navigator.of(context).pop(true);
+            },
+            child: const Text('Send & Exit'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  Future<void> _sendReasonToTeacher(String reason) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      // Create or get chat thread between student and teacher
+      final threadId = await DataService.createOrGetOneToOneThread(
+        userA: user.uid,
+        userB: widget.teacherId,
+        title: 'Video Exit Reason',
+      );
+
+      // Send the message
+      await DataService.sendChatMessage(
+        threadId: threadId,
+        senderId: user.uid,
+        text: 'Exited video "${widget.title}" because: $reason',
+      );
+    } catch (e) {
+      // Silently fail, don't block exit
+      debugPrint('Error sending reason: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
       backgroundColor: AppColors.secondaryBackground,
       appBar: AppBar(
         backgroundColor: AppColors.secondaryBackground,
@@ -308,7 +371,7 @@ class _CourseVideoScreenState extends State<CourseVideoScreen> {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

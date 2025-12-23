@@ -230,6 +230,7 @@ class CourseVideosListScreen extends StatelessWidget {
                             videoUrl: v.url,
                             durationSeconds: v.durationSeconds,
                             title: v.title,
+                            teacherId: course.teacherId,
                           ),
                         ),
                       );

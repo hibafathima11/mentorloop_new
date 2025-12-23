@@ -163,6 +163,7 @@ class _CourseScreenState extends State<CourseScreen> {
                             title: c.title,
                             description: c.description,
                             courseId: c.id,
+                            teacherId: c.teacherId,
                           ),
                         ),
                       )
@@ -193,10 +194,10 @@ class _CourseScreenState extends State<CourseScreen> {
               focusNode: _searchFocus,
               autofocus: widget.autofocusSearch,
               onChanged: (v) => setState(() => _query = v),
-              style: const TextStyle(color: Colors.white),
+          
               decoration: InputDecoration(
                 hintText: 'Find Course',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.9)),
+           
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -252,6 +253,7 @@ class _CourseScreenState extends State<CourseScreen> {
     required String title,
     required String description,
     required String courseId,
+    required String teacherId,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -361,6 +363,7 @@ class _CourseScreenState extends State<CourseScreen> {
                                         videoUrl: matchingVideo.url,
                                         durationSeconds: matchingVideo.durationSeconds,
                                         title: matchingVideo.title,
+                                        teacherId: teacherId,
                                       ),
                                     ),
                                   );
