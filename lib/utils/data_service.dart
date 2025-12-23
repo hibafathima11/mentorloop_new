@@ -348,11 +348,12 @@ class DataService {
   static Stream<List<ChatMessage>> watchThreadMessages(String threadId) {
     return _db
         .collection('chat_messages')
+        .where('threadId', isEqualTo: threadId)
+        .orderBy('createdAt')
         .snapshots()
         .map(
           (s) => s.docs
               .map((d) => ChatMessage.fromMap(d.id, d.data()))
-              .where((m) => m.threadId == threadId)
               .toList(),
         );
   }
