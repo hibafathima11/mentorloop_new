@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -10,7 +11,6 @@ class _MimePair {
 
 class CloudinaryService {
   CloudinaryService._();
-
 
   static const String cloudName = 'dlfto8vov';
   static const String unsignedUploadPreset = 'mentorloop_images';
@@ -55,10 +55,13 @@ class CloudinaryService {
     );
   }
 
-  // Very small JSON parser to avoid heavy deps. Expects a key "secure_url":"..."
   static String? _extractSecureUrl(String body) {
-    final match = RegExp(r'"secure_url"\s*:\s*"([^"]+)"').firstMatch(body);
-    return match?.group(1);
+    try {
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      return json['secure_url'] as String?;
+    } catch (e) {
+      return null;
+    }
   }
 
   static _MimePair _inferMimeType(String path) {

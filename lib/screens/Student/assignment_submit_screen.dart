@@ -5,7 +5,7 @@ import 'package:mentorloop_new/utils/data_service.dart';
 import 'package:mentorloop_new/models/entities.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:mentorloop_new/utils/cloudinary_service.dart';
 import 'dart:io';
 
 class AssignmentSubmitScreen extends StatefulWidget {
@@ -48,9 +48,9 @@ class _AssignmentSubmitScreenState extends State<AssignmentSubmitScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking file: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking file: $e')));
       }
     }
   }
@@ -60,11 +60,10 @@ class _AssignmentSubmitScreenState extends State<AssignmentSubmitScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('Not logged in');
 
-      final storageRef = FirebaseStorage.instance.ref();
-      final fileRef = storageRef.child('assignments/${widget.assignmentId}/${user.uid}/$fileName');
-
-      await fileRef.putFile(file);
-      final downloadUrl = await fileRef.getDownloadURL();
+      final downloadUrl = await CloudinaryService.uploadFile(
+        file: file,
+        resourceType: 'auto',
+      );
 
       setState(() {
         _attachmentUrl.text = downloadUrl;
@@ -79,9 +78,9 @@ class _AssignmentSubmitScreenState extends State<AssignmentSubmitScreen> {
     } catch (e) {
       setState(() => _isUploading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading file: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error uploading file: $e')));
       }
     }
   }
