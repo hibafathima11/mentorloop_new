@@ -189,6 +189,22 @@ class DataService {
         .map((s) => s.docs.map((d) => d.data()).toList());
   }
 
+  // Save video exit reason
+  static Future<void> saveVideoExitReason({
+    required String videoId,
+    required String studentId,
+    required String reason,
+    required DateTime exitedAt,
+  }) async {
+    await _db.collection('video_exit_logs').add({
+      'videoId': videoId,
+      'studentId': studentId,
+      'reason': reason,
+      'exitedAt': Timestamp.fromDate(exitedAt),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   // Assignments
   static Future<String> createAssignment(Assignment a) async {
     final ref = await _db.collection('assignments').add(a.toMap());

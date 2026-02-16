@@ -12,8 +12,36 @@ import 'package:mentorloop_new/screens/Admin/admin_teacher_chat_screen.dart';
 import 'package:mentorloop_new/screens/Admin/admin_complaints_screen.dart';
 import 'package:mentorloop_new/screens/Admin/admin_parent_feedback_screen.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+import 'package:mentorloop_new/web/screens/notificationscreen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:mentorloop_new/utils/cloudinary_service.dart';
+
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  void _openProfile(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.secondaryBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => const _AdminSettingsSheet(),
+    );
+  }
+
+  void _showSearch(BuildContext context) {
+    showSearch(context: context, delegate: AdminSearchDelegate());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +58,29 @@ class AdminDashboardScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: Color(0xFF8B5E3C)),
+            onPressed: () => _showSearch(context),
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.notifications_outlined,
+              color: Color(0xFF8B5E3C),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      const Scaffold(body: AdminNotificationsScreen()),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline, color: Color(0xFF8B5E3C)),
+            onPressed: () => _openProfile(context),
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: Color(0xFF8B5E3C)),
             onPressed: () async {
@@ -151,6 +202,233 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   // _buildActionCard removed; unified grid now renders cards inline
+}
+
+class AdminSearchDelegate extends SearchDelegate {
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      IconButton(icon: const Icon(Icons.clear), onPressed: () => query = ''),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () => close(context, null),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return _buildSearchResults();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return _buildSearchResults();
+  }
+
+  Widget _buildSearchResults() {
+    if (query.isEmpty) {
+      return const Center(child: Text('Search for students or teachers'));
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .where('name', isGreaterThanOrEqualTo: query)
+          .where('name', isLessThanOrEqualTo: '$query\uf8ff')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final users = snapshot.data!.docs;
+
+        if (users.isEmpty) {
+          return const Center(child: Text('No users found'));
+        }
+
+        return ListView.builder(
+          itemCount: users.length,
+          itemBuilder: (context, index) {
+            final user = users[index].data() as Map<String, dynamic>;
+            return ListTile(
+              leading: CircleAvatar(
+                backgroundImage:
+                    user['photoUrl'] != null &&
+                        (user['photoUrl'] as String).isNotEmpty
+                    ? NetworkImage(user['photoUrl'])
+                    : null,
+                child:
+                    (user['photoUrl'] == null ||
+                        (user['photoUrl'] as String).isEmpty)
+                    ? const Icon(Icons.person)
+                    : null,
+              ),
+              title: Text(user['name'] ?? 'No Name'),
+              subtitle: Text(user['role'] ?? 'No Role'),
+              onTap: () {
+                // Handle user tap (e.g. show details)
+                close(context, null);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _AdminSettingsSheet extends StatefulWidget {
+  const _AdminSettingsSheet();
+
+  @override
+  State<_AdminSettingsSheet> createState() => _AdminSettingsSheetState();
+}
+
+class _AdminSettingsSheetState extends State<_AdminSettingsSheet> {
+  final _name = TextEditingController();
+  final _phone = TextEditingController();
+  String? _photoUrl;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      final data = await AuthService.getUserProfile(user.uid);
+      if (data != null && mounted) {
+        setState(() {
+          _name.text = (data['name'] as String?) ?? '';
+          _phone.text = (data['phone'] as String?) ?? '';
+          _photoUrl = data['photoUrl'] as String?;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _pickAndUploadAvatar() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    setState(() => _saving = true);
+    try {
+      final url = await CloudinaryService.uploadFile(
+        file: File(picked.path),
+        resourceType: 'image',
+      );
+      setState(() => _photoUrl = url);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    setState(() => _saving = true);
+    try {
+      await AuthService.updateCurrentUserProfile(
+        name: _name.text.trim().isEmpty ? null : _name.text.trim(),
+        phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
+        photoUrl: _photoUrl,
+      );
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = MediaQuery.of(context).viewInsets;
+    return Padding(
+      padding: EdgeInsets.only(bottom: padding.bottom),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: ResponsiveHelper.getResponsivePaddingAll(context),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Admin Profile",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: _pickAndUploadAvatar,
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundImage: _photoUrl != null
+                      ? NetworkImage(_photoUrl!)
+                      : null,
+                  child: _photoUrl == null
+                      ? const Icon(Icons.person, size: 50)
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _name,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _phone,
+                decoration: const InputDecoration(
+                  labelText: 'Phone',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _saveProfile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryButton,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: _saving
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Save Profile'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 Widget _buildActionsGrid(BuildContext context, int crossAxisCount) {

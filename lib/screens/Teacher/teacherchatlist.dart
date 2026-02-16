@@ -3,8 +3,26 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mentorloop_new/utils/responsive.dart';
 
-class TeacherChatListScreen extends StatelessWidget {
+class TeacherChatListScreen extends StatefulWidget {
   const TeacherChatListScreen({super.key});
+
+  @override
+  State<TeacherChatListScreen> createState() => _TeacherChatListScreenState();
+}
+
+class _TeacherChatListScreenState extends State<TeacherChatListScreen> {
+  late Future<List<Map<String, dynamic>>> _studentsFuture;
+  late Future<Map<String, dynamic>?> _adminFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    final teacherId = FirebaseAuth.instance.currentUser?.uid;
+    if (teacherId != null) {
+      _studentsFuture = _fetchStudentsForTeacher(teacherId);
+      _adminFuture = _fetchAdmin();
+    }
+  }
 
   Future<List<Map<String, dynamic>>> _fetchStudentsForTeacher(
     String teacherId,
@@ -22,14 +40,25 @@ class TeacherChatListScreen extends StatelessWidget {
 
     if (studentIds.isEmpty) return [];
 
-    final studentsSnap = await FirebaseFirestore.instance
-        .collection('users')
-        .where(FieldPath.documentId, whereIn: studentIds.toList())
-        .get();
+    final idList = studentIds.toList();
+    final List<Map<String, dynamic>> allStudents = [];
 
-    return studentsSnap.docs
-        .map((d) => {...d.data(), 'uid': d.id})
-        .toList();
+    // Firestore whereIn limit is 10. Chunk the ids.
+    for (var i = 0; i < idList.length; i += 10) {
+      final chunk = idList.sublist(
+        i,
+        i + 10 > idList.length ? idList.length : i + 10,
+      );
+      final studentsSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      allStudents.addAll(
+        studentsSnap.docs.map((d) => {...d.data(), 'uid': d.id}),
+      );
+    }
+
+    return allStudents;
   }
 
   Future<Map<String, dynamic>?> _fetchAdmin() async {
@@ -48,9 +77,7 @@ class TeacherChatListScreen extends StatelessWidget {
     final teacherId = FirebaseAuth.instance.currentUser?.uid;
 
     if (teacherId == null) {
-      return const Scaffold(
-        body: Center(child: Text('Not logged in')),
-      );
+      return const Scaffold(body: Center(child: Text('Not logged in')));
     }
 
     return Scaffold(
@@ -67,18 +94,20 @@ class TeacherChatListScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _fetchStudentsForTeacher(teacherId),
+        future: _studentsFuture,
         builder: (context, studentSnap) {
           if (studentSnap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (studentSnap.hasError) {
-            return const Center(child: Text('Failed to load students'));
+            return Center(
+              child: Text('Failed to load students: ${studentSnap.error}'),
+            );
           }
 
           return FutureBuilder<Map<String, dynamic>?>(
-            future: _fetchAdmin(),
+            future: _adminFuture,
             builder: (context, adminSnap) {
               if (adminSnap.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -104,9 +133,7 @@ class TeacherChatListScreen extends StatelessWidget {
               ];
 
               if (chatList.isEmpty) {
-                return const Center(
-                  child: Text('No students or admin found'),
-                );
+                return const Center(child: Text('No students or admin found'));
               }
 
               return ListView.builder(
@@ -132,15 +159,15 @@ class TeacherChatListScreen extends StatelessWidget {
                     child: ListTile(
                       leading: CircleAvatar(
                         radius:
-                            ResponsiveHelper.getResponsiveIconSize(context) /
-                                2,
+                            ResponsiveHelper.getResponsiveIconSize(context) / 2,
                         backgroundColor: Colors.white,
                         backgroundImage:
                             user['photoUrl'] != null &&
-                                    (user['photoUrl'] as String).isNotEmpty
-                                ? NetworkImage(user['photoUrl'])
-                                : null,
-                        child: (user['photoUrl'] == null ||
+                                (user['photoUrl'] as String).isNotEmpty
+                            ? NetworkImage(user['photoUrl'])
+                            : null,
+                        child:
+                            (user['photoUrl'] == null ||
                                 (user['photoUrl'] as String).isEmpty)
                             ? Icon(
                                 user['role'] == 'admin'
@@ -148,7 +175,8 @@ class TeacherChatListScreen extends StatelessWidget {
                                     : Icons.person,
                                 color: const Color(0xFF8B5E3C),
                                 size: ResponsiveHelper.getResponsiveIconSize(
-                                    context),
+                                  context,
+                                ),
                               )
                             : null,
                       ),
@@ -157,24 +185,29 @@ class TeacherChatListScreen extends StatelessWidget {
                         style: TextStyle(
                           color: const Color(0xFF8B5E3C),
                           fontWeight: FontWeight.w600,
-                          fontSize:
-                              ResponsiveHelper.getResponsiveFontSize(context,
-                                  mobile: 16, tablet: 18, desktop: 20),
+                          fontSize: ResponsiveHelper.getResponsiveFontSize(
+                            context,
+                            mobile: 16,
+                            tablet: 18,
+                            desktop: 20,
+                          ),
                         ),
                       ),
                       subtitle: Text(
                         user['email'] ?? '',
                         style: TextStyle(
-                          fontSize:
-                              ResponsiveHelper.getResponsiveFontSize(context,
-                                  mobile: 14, tablet: 16, desktop: 18),
+                          fontSize: ResponsiveHelper.getResponsiveFontSize(
+                            context,
+                            mobile: 14,
+                            tablet: 16,
+                            desktop: 18,
+                          ),
                         ),
                       ),
                       trailing: Icon(
                         Icons.arrow_forward_ios,
                         color: const Color(0xFF8B5E3C),
-                        size:
-                            ResponsiveHelper.getResponsiveIconSize(context),
+                        size: ResponsiveHelper.getResponsiveIconSize(context),
                       ),
                       onTap: () {
                         Navigator.push(
@@ -290,22 +323,22 @@ class _TeacherChatRoomScreenState extends State<TeacherChatRoomScreen> {
                 final List messages = qs?.docs ?? const [];
                 // Sort messages by timestamp in client-side
                 messages.sort((a, b) {
-  final aMap = a.data() as Map<String, dynamic>;
-  final bMap = b.data() as Map<String, dynamic>;
+                  final aMap = a.data() as Map<String, dynamic>;
+                  final bMap = b.data() as Map<String, dynamic>;
 
-  final aTs = aMap['timestamp'];
-  final bTs = bMap['timestamp'];
+                  final aTs = aMap['timestamp'];
+                  final bTs = bMap['timestamp'];
 
-  // Handle missing timestamps safely
-  if (aTs == null && bTs == null) return 0;
-  if (aTs == null) return 1;
-  if (bTs == null) return -1;
+                  // Handle missing timestamps safely
+                  if (aTs == null && bTs == null) return 0;
+                  if (aTs == null) return 1;
+                  if (bTs == null) return -1;
 
-  final aTime = (aTs as Timestamp).millisecondsSinceEpoch;
-  final bTime = (bTs as Timestamp).millisecondsSinceEpoch;
+                  final aTime = (aTs as Timestamp).millisecondsSinceEpoch;
+                  final bTime = (bTs as Timestamp).millisecondsSinceEpoch;
 
-  return aTime.compareTo(bTime);
-});
+                  return aTime.compareTo(bTime);
+                });
 
                 return ListView.builder(
                   padding: ResponsiveHelper.getResponsivePaddingAll(context),
@@ -335,7 +368,8 @@ class _TeacherChatRoomScreenState extends State<TeacherChatRoomScreen> {
                           vertical: 10,
                         ),
                         constraints: BoxConstraints(
-                          maxWidth: ResponsiveHelper.screenWidth(context) * 0.75,
+                          maxWidth:
+                              ResponsiveHelper.screenWidth(context) * 0.75,
                         ),
                         decoration: BoxDecoration(
                           color: isMe ? const Color(0xFF8B5E3C) : Colors.white,
@@ -402,11 +436,12 @@ class _TeacherChatRoomScreenState extends State<TeacherChatRoomScreen> {
                         ),
                         borderSide: BorderSide.none,
                       ),
-                      contentPadding: ResponsiveHelper.getResponsivePaddingSymmetric(
-                        context,
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
+                      contentPadding:
+                          ResponsiveHelper.getResponsivePaddingSymmetric(
+                            context,
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                     ),
                     style: TextStyle(
                       fontSize: ResponsiveHelper.getResponsiveFontSize(

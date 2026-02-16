@@ -199,6 +199,8 @@ class _CourseScreenState extends State<CourseScreen> {
                 hintStyle: TextStyle(color: Colors.white.withOpacity(0.9)),
                 border: InputBorder.none,
                 isDense: true,
+                filled: false,
+                fillColor: Colors.transparent,
               ),
             ),
           ),
@@ -337,7 +339,10 @@ class _CourseScreenState extends State<CourseScreen> {
                               }
                               // Try to find CourseVideo by URL to get videoId for questions
                               try {
-                                final courseVideos = await DataService.watchCourseVideos(courseId).first;
+                                final courseVideos =
+                                    await DataService.watchCourseVideos(
+                                      courseId,
+                                    ).first;
                                 CourseVideo? matchingVideo;
                                 try {
                                   matchingVideo = courseVideos.firstWhere(
@@ -350,7 +355,7 @@ class _CourseScreenState extends State<CourseScreen> {
                                     matchingVideo = courseVideos.first;
                                   }
                                 }
-                                
+
                                 if (matchingVideo != null) {
                                   // Use CourseVideoScreen with questions support
                                   Navigator.push(
@@ -359,7 +364,8 @@ class _CourseScreenState extends State<CourseScreen> {
                                       builder: (_) => CourseVideoScreen(
                                         videoId: matchingVideo!.id,
                                         videoUrl: matchingVideo.url,
-                                        durationSeconds: matchingVideo.durationSeconds,
+                                        durationSeconds:
+                                            matchingVideo.durationSeconds,
                                         title: matchingVideo.title,
                                       ),
                                     ),
@@ -369,7 +375,8 @@ class _CourseScreenState extends State<CourseScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => VideoPlayerScreen(url: m.url),
+                                      builder: (_) =>
+                                          VideoPlayerScreen(url: m.url),
                                     ),
                                   );
                                 }
@@ -378,7 +385,8 @@ class _CourseScreenState extends State<CourseScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => VideoPlayerScreen(url: m.url),
+                                    builder: (_) =>
+                                        VideoPlayerScreen(url: m.url),
                                   ),
                                 );
                               }

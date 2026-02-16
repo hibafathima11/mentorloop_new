@@ -16,9 +16,48 @@ import 'package:mentorloop_new/screens/Common/login_screen.dart';
 import 'package:mentorloop_new/screens/Teacher/teacher_parent_feedback_screen.dart';
 import 'package:mentorloop_new/screens/Teacher/exam_create_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class TeacherDashboardScreen extends StatelessWidget {
+class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
+
+  @override
+  State<TeacherDashboardScreen> createState() => _TeacherDashboardScreenState();
+}
+
+class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
+  String? _firstCourseId;
+  bool _loadingCourses = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTeacherCourses();
+  }
+
+  Future<void> _loadTeacherCourses() async {
+    try {
+      final teacherId = FirebaseAuth.instance.currentUser?.uid;
+      if (teacherId == null) return;
+
+      final coursesSnap = await FirebaseFirestore.instance
+          .collection('courses')
+          .where('teacherId', isEqualTo: teacherId)
+          .limit(1)
+          .get();
+
+      if (coursesSnap.docs.isNotEmpty && mounted) {
+        setState(() {
+          _firstCourseId = coursesSnap.docs.first.id;
+          _loadingCourses = false;
+        });
+      } else if (mounted) {
+        setState(() => _loadingCourses = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingCourses = false);
+    }
+  }
 
   void _openSettings(BuildContext context) {
     showModalBottomSheet(
@@ -69,12 +108,20 @@ class TeacherDashboardScreen extends StatelessWidget {
         icon: Icons.people,
         title: 'View Doubts',
         subtitle: 'Check and reply to doubts',
-        onTap: (ctx) => Navigator.push(
-          ctx,
-          MaterialPageRoute(
-            builder: (_) => const DoubtsScreen(courseId: 'COURSE_ID'),
-          ),
-        ),
+        onTap: (ctx) {
+          if (_firstCourseId != null) {
+            Navigator.push(
+              ctx,
+              MaterialPageRoute(
+                builder: (_) => DoubtsScreen(courseId: _firstCourseId!),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              const SnackBar(content: Text('No courses found yet')),
+            );
+          }
+        },
       ),
       _DashAction(
         icon: Icons.quiz,
@@ -89,12 +136,20 @@ class TeacherDashboardScreen extends StatelessWidget {
         icon: Icons.analytics,
         title: 'Analytics',
         subtitle: 'View performance analytics',
-        onTap: (ctx) => Navigator.push(
-          ctx,
-          MaterialPageRoute(
-            builder: (_) => const AnalyticsScreen(courseId: 'COURSE_ID'),
-          ),
-        ),
+        onTap: (ctx) {
+          if (_firstCourseId != null) {
+            Navigator.push(
+              ctx,
+              MaterialPageRoute(
+                builder: (_) => AnalyticsScreen(courseId: _firstCourseId!),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              const SnackBar(content: Text('No courses found yet')),
+            );
+          }
+        },
       ),
       _DashAction(
         icon: Icons.chat_bubble_outline,
@@ -122,9 +177,7 @@ class TeacherDashboardScreen extends StatelessWidget {
         subtitle: 'Create and manage exams',
         onTap: (ctx) => Navigator.push(
           ctx,
-          MaterialPageRoute(
-            builder: (_) => const ExamCreateScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const ExamCreateScreen()),
         ),
       ),
     ];
@@ -185,6 +238,7 @@ class TeacherDashboardScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (_loadingCourses) const LinearProgressIndicator(),
               Container(
                 width: double.infinity,
                 padding: ResponsiveHelper.getResponsivePaddingAll(context),

@@ -50,15 +50,16 @@ class _CourseVideoScreenState extends State<CourseVideoScreen> {
 
   void _tickListener() {
     if (!_controller.value.isInitialized || _isQuestionDialogOpen) return;
-    
+
     final position = _controller.value.position;
     final positionSeconds = position.inSeconds;
-    
+
     // Check if we've reached a question timestamp
     for (final q in _questions) {
-      if (!_askedQuestionIds.contains(q.id) && 
+      if (!_askedQuestionIds.contains(q.id) &&
           positionSeconds >= q.showAtSecond &&
-          positionSeconds < q.showAtSecond + 2) { // 2 second window to catch the question
+          positionSeconds < q.showAtSecond + 2) {
+        // 2 second window to catch the question
         _askedQuestionIds.add(q.id);
         _pauseAndAsk(q);
         break;
@@ -68,25 +69,25 @@ class _CourseVideoScreenState extends State<CourseVideoScreen> {
 
   Future<void> _pauseAndAsk(VideoQuestion q) async {
     if (_isQuestionDialogOpen) return;
-    
+
     setState(() {
       _isQuestionDialogOpen = true;
     });
-    
+
     _controller.pause();
-    
+
     final selected = await showDialog<int>(
       context: context,
       barrierDismissible: false, // Cannot dismiss without answering
       builder: (_) => _QuestionDialog(question: q),
     );
-    
+
     if (!mounted) return;
-    
+
     setState(() {
       _isQuestionDialogOpen = false;
     });
-    
+
     final user = FirebaseAuth.instance.currentUser;
     if (user != null && selected != null) {
       final bool correct = selected == q.correctIndex;
@@ -95,7 +96,7 @@ class _CourseVideoScreenState extends State<CourseVideoScreen> {
           _correctCount += 1;
         });
       }
-      
+
       await DataService.saveVideoAnswer(
         videoId: widget.videoId,
         questionId: q.id,
@@ -103,19 +104,23 @@ class _CourseVideoScreenState extends State<CourseVideoScreen> {
         selectedIndex: selected,
         isCorrect: correct,
       );
-      
+
       // Show feedback
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(correct ? '✅ Correct!' : '❌ Incorrect. The correct answer was: ${q.options[q.correctIndex]}'),
+            content: Text(
+              correct
+                  ? '✅ Correct!'
+                  : '❌ Incorrect. The correct answer was: ${q.options[q.correctIndex]}',
+            ),
             duration: const Duration(seconds: 2),
             backgroundColor: correct ? Colors.green : Colors.red,
           ),
         );
       }
     }
-    
+
     // Resume video after question is answered
     if (mounted && _controller.value.isInitialized) {
       _controller.play();
@@ -158,157 +163,265 @@ class _CourseVideoScreenState extends State<CourseVideoScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.secondaryBackground,
-      appBar: AppBar(
-        backgroundColor: AppColors.secondaryBackground,
-        elevation: 0,
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
-        title: Text(
-          widget.title,
-          style: TextStyle(color: AppColors.textPrimary),
+  Future<bool> _onWillPop() async {
+    final reasonController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Exit Video?'),
+          ],
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Please provide a reason for exiting this video:',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: reasonController,
+                maxLines: 3,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Enter your reason here...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a reason to exit';
+                  }
+                  if (value.trim().length < 5) {
+                    return 'Reason must be at least 5 characters';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Your progress will be saved.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
-            onPressed: _isSavingAssessment ? null : _completeAssessment,
-            child: _isSavingAssessment
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Finish', style: TextStyle(color: Colors.blue)),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          if (_controller.value.isInitialized)
-            AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: NonSkippableVideoPlayer(
-                controller: _controller,
-                onPlay: () {
-                  setState(() {});
-                },
-                onPause: () {
-                  setState(() {});
-                },
-              ),
-            )
-          else
-            const AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Center(child: CircularProgressIndicator()),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                // Save the reason to Firestore or log it
+                final reason = reasonController.text.trim();
+                _saveExitReason(reason);
+                Navigator.pop(context, true);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
             ),
-          const SizedBox(height: 16),
-          // Progress and stats
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                if (_questions.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue[200]!),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Column(
-                          children: [
-                            Text(
-                              'Questions',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            Text(
-                              '${_questions.length}',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          width: 1,
-                          height: 40,
-                          color: Colors.blue[200],
-                        ),
-                        Column(
-                          children: [
-                            Text(
-                              'Correct',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            Text(
-                              '$_correctCount',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          width: 1,
-                          height: 40,
-                          color: Colors.blue[200],
-                        ),
-                        Column(
-                          children: [
-                            Text(
-                              'Progress',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            Text(
-                              _controller.value.isInitialized
-                                  ? '${((_controller.value.position.inSeconds / _controller.value.duration.inSeconds) * 100).toStringAsFixed(0)}%'
-                                  : '0%',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.orange,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: 8),
-                if (_controller.value.isInitialized)
-                  Text(
-                    '⚠️ Skipping is disabled. Please watch the video continuously.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                      fontStyle: FontStyle.italic,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-              ],
-            ),
+            child: const Text('Exit Video'),
           ),
         ],
       ),
     );
+
+    reasonController.dispose();
+    return shouldExit ?? false;
+  }
+
+  Future<void> _saveExitReason(String reason) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await DataService.saveVideoExitReason(
+          videoId: widget.videoId,
+          studentId: user.uid,
+          reason: reason,
+          exitedAt: DateTime.now(),
+        );
+      }
+    } catch (e) {
+      // Log error but don't prevent exit
+      debugPrint('Error saving exit reason: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: AppColors.secondaryBackground,
+        appBar: AppBar(
+          backgroundColor: AppColors.secondaryBackground,
+          elevation: 0,
+          iconTheme: IconThemeData(color: AppColors.textPrimary),
+          title: Text(
+            widget.title,
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: _isSavingAssessment ? null : _completeAssessment,
+              child: _isSavingAssessment
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Finish', style: TextStyle(color: Colors.blue)),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            if (_controller.value.isInitialized)
+              AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: NonSkippableVideoPlayer(
+                  controller: _controller,
+                  onPlay: () {
+                    setState(() {});
+                  },
+                  onPause: () {
+                    setState(() {});
+                  },
+                ),
+              )
+            else
+              const AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            const SizedBox(height: 16),
+            // Progress and stats
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  if (_questions.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue[200]!),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Column(
+                            children: [
+                              Text(
+                                'Questions',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              Text(
+                                '${_questions.length}',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            width: 1,
+                            height: 40,
+                            color: Colors.blue[200],
+                          ),
+                          Column(
+                            children: [
+                              Text(
+                                'Correct',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              Text(
+                                '$_correctCount',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            width: 1,
+                            height: 40,
+                            color: Colors.blue[200],
+                          ),
+                          Column(
+                            children: [
+                              Text(
+                                'Progress',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              Text(
+                                _controller.value.isInitialized
+                                    ? '${((_controller.value.position.inSeconds / _controller.value.duration.inSeconds) * 100).toStringAsFixed(0)}%'
+                                    : '0%',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  if (_controller.value.isInitialized)
+                    Text(
+                      '⚠️ Skipping is disabled. Please watch the video continuously.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontStyle: FontStyle.italic,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ), // Close WillPopScope child Scaffold
+    ); // Close WillPopScope
   }
 }
 
@@ -362,10 +475,7 @@ class _QuestionDialogState extends State<_QuestionDialog> {
               const SizedBox(height: 16),
               const Text(
                 'Select your answer:',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
               for (int i = 0; i < widget.question.options.length; i++)
