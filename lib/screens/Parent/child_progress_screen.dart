@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mentorloop_new/utils/colors.dart';
 import 'package:mentorloop_new/utils/responsive.dart';
-import 'package:mentorloop_new/utils/data_service.dart';
-import 'package:mentorloop_new/models/entities.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -28,85 +26,6 @@ class ChildProgressScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Attendance',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 200,
-                child: StreamBuilder<List<AttendanceRecord>>(
-                  stream: DataService.watchStudentAttendance(studentId),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Text(
-                          'Error loading attendance: ${snapshot.error}',
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      );
-                    }
-                    final records = snapshot.data ?? const <AttendanceRecord>[];
-                    if (records.isEmpty)
-                      return const Center(child: Text('No attendance records'));
-                    return ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: records.length,
-                      itemBuilder: (context, i) {
-                        final r = records[i];
-                        return Container(
-                          width: 160,
-                          margin: const EdgeInsets.only(right: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Course: ${r.courseId}',
-                                style: TextStyle(color: AppColors.textPrimary),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Date: ${r.date.toDate().toLocal()}'.split(
-                                  '.',
-                                )[0],
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                r.present ? 'Present' : 'Absent',
-                                style: TextStyle(
-                                  color: r.present ? Colors.green : Colors.red,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 24),
               Text(
                 'Video Assessments',
                 style: TextStyle(

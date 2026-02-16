@@ -350,26 +350,29 @@ class DataService {
   }
 
   static Stream<List<ChatThread>> watchMyThreads(String uid) {
+    // Query server-side for threads where this user is a member.
     return _db
         .collection('chat_threads')
+        .where('memberIds', arrayContains: uid)
         .snapshots()
-        .map(
-          (s) => s.docs
-              .map((d) => ChatThread.fromMap(d.id, d.data()))
-              .where((t) => t.memberIds.contains(uid))
-              .toList(),
-        );
+        .map((s) => s.docs.map((d) => ChatThread.fromMap(d.id, d.data())).toList());
   }
 
   static Stream<List<ChatMessage>> watchThreadMessages(String threadId) {
     return _db
         .collection('chat_messages')
+        .where('threadId', isEqualTo: threadId)
         .snapshots()
         .map(
           (s) => s.docs
               .map((d) => ChatMessage.fromMap(d.id, d.data()))
-              .where((m) => m.threadId == threadId)
-              .toList(),
+              .toList()
+            ..sort((a, b) {
+              if (a.createdAt == null && b.createdAt == null) return 0;
+              if (a.createdAt == null) return 1;
+              if (b.createdAt == null) return -1;
+              return a.createdAt!.compareTo(b.createdAt!);
+            }),
         );
   }
 
@@ -380,15 +383,22 @@ class DataService {
   }) async {
     final batch = _db.batch();
     final msgRef = _db.collection('chat_messages').doc();
+
+    // Ensure the sender is present in the thread's memberIds (defensive).
+    // This guards against threads created or mutated outside this app
+    // that may have missing memberIds entries.
+    batch.update(_db.collection('chat_threads').doc(threadId), {
+      'memberIds': FieldValue.arrayUnion([senderId]),
+      'lastMessageAt': FieldValue.serverTimestamp(),
+    });
+
     batch.set(msgRef, {
       'threadId': threadId,
       'senderId': senderId,
       'text': text,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    batch.update(_db.collection('chat_threads').doc(threadId), {
-      'lastMessageAt': FieldValue.serverTimestamp(),
-    });
+
     await batch.commit();
     return msgRef.id;
   }

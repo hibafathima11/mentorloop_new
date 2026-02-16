@@ -12,12 +12,14 @@ class CourseVideoScreen extends StatefulWidget {
   final String videoUrl;
   final int durationSeconds;
   final String title;
+  final String teacherId;
   const CourseVideoScreen({
     super.key,
     required this.videoId,
     required this.videoUrl,
     required this.durationSeconds,
     required this.title,
+    required this.teacherId,
   });
 
   @override
@@ -165,6 +167,7 @@ class _CourseVideoScreenState extends State<CourseVideoScreen> {
 
   Future<bool> _onWillPop() async {
     final reasonController = TextEditingController();
+<<<<<<< HEAD
     final formKey = GlobalKey<FormState>();
 
     final shouldExit = await showDialog<bool>(
@@ -222,12 +225,85 @@ class _CourseVideoScreenState extends State<CourseVideoScreen> {
               ),
             ],
           ),
+=======
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Why are you exiting?'),
+        content: TextField(
+          controller: reasonController,
+          decoration: const InputDecoration(
+            hintText: 'Please provide a reason...',
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final reason = reasonController.text.trim();
+              if (reason.isNotEmpty) {
+                await _sendReasonToTeacher(reason);
+              }
+              Navigator.of(context).pop(true);
+            },
+            child: const Text('Send & Exit'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  Future<void> _sendReasonToTeacher(String reason) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      // Create or get chat thread between student and teacher
+      final threadId = await DataService.createOrGetOneToOneThread(
+        userA: user.uid,
+        userB: widget.teacherId,
+        title: 'Video Exit Reason',
+      );
+
+      // Send the message
+      await DataService.sendChatMessage(
+        threadId: threadId,
+        senderId: user.uid,
+        text: 'Exited video "${widget.title}" because: $reason',
+      );
+    } catch (e) {
+      // Silently fail, don't block exit
+      debugPrint('Error sending reason: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+      backgroundColor: AppColors.secondaryBackground,
+      appBar: AppBar(
+        backgroundColor: AppColors.secondaryBackground,
+        elevation: 0,
+        iconTheme: IconThemeData(color: AppColors.textPrimary),
+        title: Text(
+          widget.title,
+          style: TextStyle(color: AppColors.textPrimary),
+>>>>>>> 7fc5dbdf4ba6def704f1c8226da150e5f88e13c8
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
+<<<<<<< HEAD
           ElevatedButton(
             onPressed: () {
               if (formKey.currentState!.validate()) {
@@ -240,11 +316,147 @@ class _CourseVideoScreenState extends State<CourseVideoScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.orange,
               foregroundColor: Colors.white,
+=======
+        ],
+      ),
+      body: Column(
+        children: [
+          if (_controller.value.hasError)
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Center(
+                child: Text(
+                  'Error loading video: ${_controller.value.errorDescription}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            )
+          else if (_controller.value.isInitialized)
+            AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: NonSkippableVideoPlayer(
+                controller: _controller,
+                onPlay: () {
+                  setState(() {});
+                },
+                onPause: () {
+                  setState(() {});
+                },
+              ),
+            )
+          else
+            const AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          const SizedBox(height: 16),
+          // Progress and stats
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                if (_questions.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue[200]!),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          children: [
+                            Text(
+                              'Questions',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            Text(
+                              '${_questions.length}',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          width: 1,
+                          height: 40,
+                          color: Colors.blue[200],
+                        ),
+                        Column(
+                          children: [
+                            Text(
+                              'Correct',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            Text(
+                              '$_correctCount',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          width: 1,
+                          height: 40,
+                          color: Colors.blue[200],
+                        ),
+                        Column(
+                          children: [
+                            Text(
+                              'Progress',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            Text(
+                              _controller.value.isInitialized
+                                  ? '${((_controller.value.position.inSeconds / _controller.value.duration.inSeconds) * 100).toStringAsFixed(0)}%'
+                                  : '0%',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                if (_controller.value.isInitialized)
+                  Text(
+                    '⚠️ Skipping is disabled. Please watch the video continuously.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+              ],
+>>>>>>> 7fc5dbdf4ba6def704f1c8226da150e5f88e13c8
             ),
             child: const Text('Exit Video'),
           ),
         ],
       ),
+<<<<<<< HEAD
     );
 
     reasonController.dispose();
@@ -422,6 +634,9 @@ class _CourseVideoScreenState extends State<CourseVideoScreen> {
         ),
       ), // Close WillPopScope child Scaffold
     ); // Close WillPopScope
+=======
+    ));
+>>>>>>> 7fc5dbdf4ba6def704f1c8226da150e5f88e13c8
   }
 }
 

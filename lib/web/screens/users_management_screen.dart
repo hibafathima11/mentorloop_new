@@ -113,11 +113,13 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
       child: TextField(
         controller: _searchController,
         onChanged: (value) => setState(() => _searchQuery = value),
-        decoration: InputDecoration(
+        style: const TextStyle(color: Colors.black),
+        decoration: const InputDecoration(
           hintText: 'Search users by name or email...',
-          prefixIcon: const Icon(Icons.search),
+          hintStyle: TextStyle(color: Colors.black54),
+          prefixIcon: Icon(Icons.search, color: Colors.black54),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       ),
     );

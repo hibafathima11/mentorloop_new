@@ -366,11 +366,11 @@ class AuthService {
     }
   }
 
-  /// Check if email exists in the system
+  /// Check if email exists with password authentication
   static Future<bool> emailExists(String email) async {
     try {
       final methods = await _auth.fetchSignInMethodsForEmail(email.trim());
-      return methods.isNotEmpty;
+      return methods.contains('password');
     } catch (e) {
       return false;
     }
