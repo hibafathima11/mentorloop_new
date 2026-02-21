@@ -156,6 +156,98 @@ class _AdminUserAnalyticsScreenState extends State<AdminUserAnalyticsScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Detailed Active Students',
+                        style: TextStyle(
+                          color: const Color(0xFF8B5E3C),
+                          fontSize: ResponsiveHelper.getResponsiveFontSize(
+                            context,
+                            mobile: 18,
+                            tablet: 20,
+                            desktop: 22,
+                          ),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: top.length,
+                        itemBuilder: (context, index) {
+                          final studentId = top[index].key;
+                          final count = top[index].value;
+                          return FutureBuilder<DocumentSnapshot>(
+                            future: FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(studentId)
+                                .get(),
+                            builder: (context, userSnap) {
+                              if (!userSnap.hasData) return const SizedBox();
+                              final userData =
+                                  userSnap.data!.data()
+                                      as Map<String, dynamic>? ??
+                                  {};
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: const Color(
+                                      0xFF8B5E3C,
+                                    ).withOpacity(0.1),
+                                    backgroundImage:
+                                        userData['photoUrl'] != null
+                                        ? NetworkImage(userData['photoUrl'])
+                                        : null,
+                                    child: userData['photoUrl'] == null
+                                        ? Text(
+                                            (userData['name'] ?? 'U')[0]
+                                                .toUpperCase(),
+                                            style: const TextStyle(
+                                              color: Color(0xFF8B5E3C),
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  title: Text(
+                                    userData['name'] ?? studentId,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    userData['email'] ?? 'No email',
+                                  ),
+                                  trailing: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF8B5E3C,
+                                      ).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '$count Activities',
+                                      style: const TextStyle(
+                                        color: Color(0xFF8B5E3C),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ],
                   );
                 },
@@ -300,50 +392,93 @@ class _AdminUserAnalyticsScreenState extends State<AdminUserAnalyticsScreen> {
           desktop: 14,
         ),
       ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 88,
-            child: Text(
-              studentId.substring(
-                0,
-                studentId.length > 8 ? 8 : studentId.length,
+      child: FutureBuilder<DocumentSnapshot>(
+        future: FirebaseFirestore.instance
+            .collection('users')
+            .doc(studentId)
+            .get(),
+        builder: (context, userSnap) {
+          String displayName = studentId.substring(
+            0,
+            studentId.length > 8 ? 8 : studentId.length,
+          );
+          String? photoUrl;
+          if (userSnap.hasData && userSnap.data!.exists) {
+            final userData = userSnap.data!.data() as Map<String, dynamic>;
+            displayName = userData['name'] ?? displayName;
+            photoUrl = userData['photoUrl'] as String?;
+          }
+
+          return Row(
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: const Color(0xFF8B5E3C).withOpacity(0.1),
+                backgroundImage: photoUrl != null
+                    ? NetworkImage(photoUrl)
+                    : null,
+                child: photoUrl == null
+                    ? Text(
+                        displayName[0].toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF8B5E3C),
+                        ),
+                      )
+                    : null,
               ),
-              style: TextStyle(color: AppColors.textSecondary),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Stack(
-              children: [
-                Container(
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(8),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 100,
+                child: Text(
+                  displayName,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                Container(
-                  height: 16,
-                  width: barWidth,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B5E3C),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Stack(
+                  children: [
+                    Container(
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    Container(
+                      height: 12,
+                      width: barWidth,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFF8B5E3C),
+                            const Color(0xFF8B5E3C).withOpacity(0.7),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '$count',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '$count',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

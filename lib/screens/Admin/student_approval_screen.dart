@@ -172,88 +172,176 @@ class _StudentApprovalScreenState extends State<StudentApprovalScreen> {
                       final phone = data['phone'] ?? '';
                       final createdAt = data['createdAt'];
 
-                      return Container(
-                        margin: EdgeInsets.only(
-                          bottom: ResponsiveHelper.getResponsiveMargin(
-                            context,
-                            mobile: 15,
-                            tablet: 20,
-                            desktop: 25,
-                          ),
-                        ),
-                        padding: ResponsiveHelper.getResponsivePaddingAll(
-                          context,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(
-                            ResponsiveHelper.getResponsiveCardRadius(context),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
+                      return GestureDetector(
+                        onTap: () => _showStudentDetails(uid, data),
+                        child: Container(
+                          margin: EdgeInsets.only(
+                            bottom: ResponsiveHelper.getResponsiveMargin(
+                              context,
+                              mobile: 15,
+                              tablet: 20,
+                              desktop: 25,
                             ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  backgroundColor: const Color(0xFF8B5E3C),
-                                  child: Text(
-                                    email.isNotEmpty
-                                        ? email[0].toUpperCase()
-                                        : 'S',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
+                          ),
+                          padding: ResponsiveHelper.getResponsivePaddingAll(
+                            context,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(
+                              ResponsiveHelper.getResponsiveCardRadius(context),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: const Color(0xFF8B5E3C),
+                                    child: Text(
+                                      email.isNotEmpty
+                                          ? email[0].toUpperCase()
+                                          : 'S',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                SizedBox(
-                                  width: ResponsiveHelper.getResponsiveMargin(
-                                    context,
-                                    mobile: 15,
-                                    tablet: 20,
-                                    desktop: 25,
+                                  SizedBox(
+                                    width: ResponsiveHelper.getResponsiveMargin(
+                                      context,
+                                      mobile: 15,
+                                      tablet: 20,
+                                      desktop: 25,
+                                    ),
                                   ),
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        email,
-                                        style: TextStyle(
-                                          color: const Color(0xFF8B5E3C),
-                                          fontSize:
-                                              ResponsiveHelper.getResponsiveFontSize(
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          email,
+                                          style: TextStyle(
+                                            color: const Color(0xFF8B5E3C),
+                                            fontSize:
+                                                ResponsiveHelper.getResponsiveFontSize(
+                                                  context,
+                                                  mobile: 16,
+                                                  tablet: 18,
+                                                  desktop: 20,
+                                                ),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height:
+                                              ResponsiveHelper.getResponsiveMargin(
                                                 context,
-                                                mobile: 16,
-                                                tablet: 18,
-                                                desktop: 20,
+                                                mobile: 5,
+                                                tablet: 8,
+                                                desktop: 10,
                                               ),
-                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        Text(
+                                          'Phone: $phone',
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize:
+                                                ResponsiveHelper.getResponsiveFontSize(
+                                                  context,
+                                                  mobile: 14,
+                                                  tablet: 16,
+                                                  desktop: 18,
+                                                ),
+                                          ),
+                                        ),
+                                        if (createdAt != null)
+                                          Text(
+                                            'Registered: ${createdAt.toDate().toString().split(' ')[0]}',
+                                            style: TextStyle(
+                                              color: Colors.grey[500],
+                                              fontSize:
+                                                  ResponsiveHelper.getResponsiveFontSize(
+                                                    context,
+                                                    mobile: 12,
+                                                    tablet: 14,
+                                                    desktop: 16,
+                                                  ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(
+                                height: ResponsiveHelper.getResponsiveMargin(
+                                  context,
+                                  mobile: 20,
+                                  tablet: 25,
+                                  desktop: 30,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () async {
+                                        try {
+                                          await AuthService.approveStudent(uid);
+                                          if (!context.mounted) return;
+
+                                          // Show success message
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Student approved successfully!\n✅ Email notification sent.',
+                                              ),
+                                              backgroundColor: Colors.green,
+                                              duration: Duration(seconds: 4),
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error: $e'),
+                                              backgroundColor: Colors.red,
+                                              duration: const Duration(
+                                                seconds: 4,
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            ResponsiveHelper.getResponsiveCardRadius(
+                                              context,
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                      SizedBox(
-                                        height:
-                                            ResponsiveHelper.getResponsiveMargin(
-                                              context,
-                                              mobile: 5,
-                                              tablet: 8,
-                                              desktop: 10,
-                                            ),
-                                      ),
-                                      Text(
-                                        'Phone: $phone',
+                                      child: Text(
+                                        'Approve',
                                         style: TextStyle(
-                                          color: Colors.grey[600],
                                           fontSize:
                                               ResponsiveHelper.getResponsiveFontSize(
                                                 context,
@@ -261,173 +349,94 @@ class _StudentApprovalScreenState extends State<StudentApprovalScreen> {
                                                 tablet: 16,
                                                 desktop: 18,
                                               ),
-                                        ),
-                                      ),
-                                      if (createdAt != null)
-                                        Text(
-                                          'Registered: ${createdAt.toDate().toString().split(' ')[0]}',
-                                          style: TextStyle(
-                                            color: Colors.grey[500],
-                                            fontSize:
-                                                ResponsiveHelper.getResponsiveFontSize(
-                                                  context,
-                                                  mobile: 12,
-                                                  tablet: 14,
-                                                  desktop: 16,
-                                                ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(
-                              height: ResponsiveHelper.getResponsiveMargin(
-                                context,
-                                mobile: 20,
-                                tablet: 25,
-                                desktop: 30,
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: () async {
-                                      try {
-                                        await AuthService.approveStudent(uid);
-                                        if (!context.mounted) return;
-                                        
-                                        // Show success message
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Student approved successfully!\n✅ Email notification sent.',
-                                            ),
-                                            backgroundColor: Colors.green,
-                                            duration: Duration(seconds: 4),
-                                          ),
-                                        );
-                                      } catch (e) {
-                                        if (!context.mounted) return;
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error: $e'),
-                                            backgroundColor: Colors.red,
-                                            duration: const Duration(seconds: 4),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          ResponsiveHelper.getResponsiveCardRadius(
-                                            context,
-                                          ),
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ),
-                                    child: Text(
-                                      'Approve',
-                                      style: TextStyle(
-                                        fontSize:
-                                            ResponsiveHelper.getResponsiveFontSize(
-                                              context,
-                                              mobile: 14,
-                                              tablet: 16,
-                                              desktop: 18,
-                                            ),
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                  ),
+                                  SizedBox(
+                                    width: ResponsiveHelper.getResponsiveMargin(
+                                      context,
+                                      mobile: 15,
+                                      tablet: 20,
+                                      desktop: 25,
                                     ),
                                   ),
-                                ),
-                                SizedBox(
-                                  width: ResponsiveHelper.getResponsiveMargin(
-                                    context,
-                                    mobile: 15,
-                                    tablet: 20,
-                                    desktop: 25,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () {
-                                      // Handle rejection
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: const Text('Reject Student'),
-                                          content: const Text(
-                                            'Are you sure you want to reject this student?',
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context),
-                                              child: const Text('Cancel'),
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () {
+                                        // Handle rejection
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text('Reject Student'),
+                                            content: const Text(
+                                              'Are you sure you want to reject this student?',
                                             ),
-                                            TextButton(
-                                              onPressed: () {
-                                                // Delete user document
-                                                FirebaseFirestore.instance
-                                                    .collection('users')
-                                                    .doc(uid)
-                                                    .delete();
-                                                Navigator.pop(context);
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                      'Student rejected',
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                                child: const Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  // Delete user document
+                                                  FirebaseFirestore.instance
+                                                      .collection('users')
+                                                      .doc(uid)
+                                                      .delete();
+                                                  Navigator.pop(context);
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        'Student rejected',
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.orange,
                                                     ),
-                                                    backgroundColor:
-                                                        Colors.orange,
-                                                  ),
-                                                );
-                                              },
-                                              child: const Text('Reject'),
-                                            ),
-                                          ],
+                                                  );
+                                                },
+                                                child: const Text('Reject'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                        side: const BorderSide(
+                                          color: Colors.red,
                                         ),
-                                      );
-                                    },
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.red,
-                                      side: const BorderSide(color: Colors.red),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          ResponsiveHelper.getResponsiveCardRadius(
-                                            context,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            ResponsiveHelper.getResponsiveCardRadius(
+                                              context,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    child: Text(
-                                      'Reject',
-                                      style: TextStyle(
-                                        fontSize:
-                                            ResponsiveHelper.getResponsiveFontSize(
-                                              context,
-                                              mobile: 14,
-                                              tablet: 16,
-                                              desktop: 18,
-                                            ),
-                                        fontWeight: FontWeight.w600,
+                                      child: Text(
+                                        'Reject',
+                                        style: TextStyle(
+                                          fontSize:
+                                              ResponsiveHelper.getResponsiveFontSize(
+                                                context,
+                                                mobile: 14,
+                                                tablet: 16,
+                                                desktop: 18,
+                                              ),
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     }).toList(),
@@ -437,6 +446,219 @@ class _StudentApprovalScreenState extends State<StudentApprovalScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showStudentDetails(String studentId, Map<String, dynamic> userData) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 30,
+                          backgroundColor: const Color(0xFF8B5E3C),
+                          child: Text(
+                            userData['email']?[0]?.toUpperCase() ?? 'S',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                userData['name'] ?? 'Unknown Name',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                userData['email'] ?? '',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _detailTile(
+                      Icons.phone,
+                      'Phone',
+                      userData['phone'] ?? 'N/A',
+                    ),
+                    _detailTile(
+                      Icons.calendar_today,
+                      'Registered',
+                      userData['createdAt'] != null
+                          ? (userData['createdAt'] as Timestamp)
+                                .toDate()
+                                .toString()
+                                .split(' ')[0]
+                          : 'N/A',
+                    ),
+                    const Divider(height: 40),
+                    const Text(
+                      'Guardian Information',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF8B5E3C),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FutureBuilder<QuerySnapshot>(
+                      future: FirebaseFirestore.instance
+                          .collection('guardians')
+                          .where('studentId', isEqualTo: studentId)
+                          .get(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return const Text('No guardian details found');
+                        }
+                        final guardian =
+                            snapshot.data!.docs.first.data()
+                                as Map<String, dynamic>;
+                        return Column(
+                          children: [
+                            _detailTile(
+                              Icons.person,
+                              'Name',
+                              guardian['name'] ?? 'N/A',
+                            ),
+                            _detailTile(
+                              Icons.family_restroom,
+                              'Relation',
+                              guardian['relation'] ?? 'N/A',
+                            ),
+                            _detailTile(
+                              Icons.phone,
+                              'Phone',
+                              guardian['phone'] ?? 'N/A',
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Applied Courses',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF8B5E3C),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FutureBuilder<QuerySnapshot>(
+                      future: FirebaseFirestore.instance
+                          .collection('courses')
+                          .where('studentIds', arrayContains: studentId)
+                          .get(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return const Text('No courses applied yet');
+                        }
+                        return Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: snapshot.data!.docs.map((doc) {
+                            final course = doc.data() as Map<String, dynamic>;
+                            return Chip(
+                              label: Text(course['title'] ?? 'Course'),
+                              backgroundColor: const Color(
+                                0xFF8B5E3C,
+                              ).withValues(alpha: 0.1),
+                              labelStyle: const TextStyle(
+                                color: Color(0xFF8B5E3C),
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B5E3C),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Close Details',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _detailTile(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.grey[600], size: 20),
+          const SizedBox(width: 12),
+          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(value),
+        ],
       ),
     );
   }
