@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mentorloop_new/utils/responsive.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mentorloop_new/utils/data_service.dart';
+import 'package:mentorloop_new/models/entities.dart';
 
 class CoursesManagementScreen extends StatefulWidget {
   const CoursesManagementScreen({super.key});
@@ -28,16 +29,21 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
       final courses = await DataService.watchAllCourses().first;
       if (mounted) {
         setState(() {
-          _courses = courses.map((course) => {
-            'id': course.id,
-            'name': course.title,
-            'teacher': 'Loading...', // Will be loaded separately
-            'students': course.studentIds.length,
-            'status': 'Active',
-            'createdDate': course.createdAt?.toString() ?? DateTime.now().toString(),
-            'progress': 0,
-            'icon': '🎯',
-          }).toList();
+          _courses = courses
+              .map(
+                (course) => {
+                  'id': course.id,
+                  'name': course.title,
+                  'teacher': 'Loading...', // Will be loaded separately
+                  'students': course.studentIds.length,
+                  'status': 'Active',
+                  'createdDate':
+                      course.createdAt?.toString() ?? DateTime.now().toString(),
+                  'progress': 0,
+                  'icon': '🎯',
+                },
+              )
+              .toList();
           _isLoading = false;
         });
         // Load teacher names
@@ -56,7 +62,10 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
     final db = FirebaseFirestore.instance;
     for (var course in _courses) {
       try {
-        final courseDoc = await db.collection('courses').doc(course['id']).get();
+        final courseDoc = await db
+            .collection('courses')
+            .doc(course['id'])
+            .get();
         final teacherId = courseDoc.data()?['teacherId'];
         if (teacherId != null) {
           final teacherDoc = await db.collection('users').doc(teacherId).get();
@@ -73,9 +82,9 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
 
   List<Map<String, dynamic>> get _filteredCourses {
     return _courses.where((course) {
-      final nameMatch = course['name']
-          .toLowerCase()
-          .contains(_searchController.text.toLowerCase());
+      final nameMatch = course['name'].toLowerCase().contains(
+        _searchController.text.toLowerCase(),
+      );
       final statusMatch =
           _selectedStatus == 'All' || course['status'] == _selectedStatus;
       return nameMatch && statusMatch;
@@ -120,10 +129,10 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
               DropdownButton<String>(
                 value: _selectedStatus,
                 items: ['All', 'Active', 'Draft', 'Archived']
-                    .map((status) => DropdownMenuItem(
-                          value: status,
-                          child: Text(status),
-                        ))
+                    .map(
+                      (status) =>
+                          DropdownMenuItem(value: status, child: Text(status)),
+                    )
                     .toList(),
                 onChanged: (value) {
                   if (value != null) {
@@ -153,10 +162,7 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
                     const SizedBox(height: 16),
                     Text(
                       'No courses found',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -167,7 +173,9 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: isMobile ? 1 : (screenSize.width > 1200 ? 3 : 2),
+                crossAxisCount: isMobile
+                    ? 1
+                    : (screenSize.width > 1200 ? 3 : 2),
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 childAspectRatio: 1.4,
@@ -177,6 +185,7 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
                 final course = _filteredCourses[index];
                 return _CourseCard(
                   course: course,
+                  onEdit: () => _showEditTeacherDialog(course),
                 );
               },
             ),
@@ -184,14 +193,99 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
       ),
     );
   }
+
+  Future<void> _showEditTeacherDialog(Map<String, dynamic> courseData) async {
+    final db = FirebaseFirestore.instance;
+    final courseDoc = await db
+        .collection('courses')
+        .doc(courseData['id'])
+        .get();
+    if (!courseDoc.exists) return;
+
+    final course = Course.fromMap(courseDoc.id, courseDoc.data()!);
+    String? selectedTeacherId = course.teacherId;
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text('Edit Teacher - ${course.title}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Select a new teacher for this course:'),
+              const SizedBox(height: 16),
+              StreamBuilder<List<UserProfile>>(
+                stream: DataService.streamTeachers(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData)
+                    return const CircularProgressIndicator();
+                  final teachers = snapshot.data!;
+                  return DropdownButtonFormField<String>(
+                    value: selectedTeacherId,
+                    items: teachers.map((t) {
+                      return DropdownMenuItem(
+                        value: t.uid,
+                        child: Text(t.name.isNotEmpty ? t.name : t.email),
+                      );
+                    }).toList(),
+                    onChanged: (v) =>
+                        setDialogState(() => selectedTeacherId = v),
+                    decoration: const InputDecoration(
+                      labelText: 'Teacher',
+                      border: OutlineInputBorder(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  final updatedCourse = Course(
+                    id: course.id,
+                    title: course.title,
+                    description: course.description,
+                    teacherId: selectedTeacherId ?? '',
+                    studentIds: course.studentIds,
+                  );
+                  await DataService.updateCourse(course.id, updatedCourse);
+                  await _loadCourses(); // Refresh list
+                  if (context.mounted) Navigator.pop(context);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8B5E3C),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _CourseCard extends StatelessWidget {
   final Map<String, dynamic> course;
+  final VoidCallback onEdit;
 
-  const _CourseCard({
-    required this.course,
-  });
+  const _CourseCard({required this.course, required this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -266,10 +360,7 @@ class _CourseCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'by ${course['teacher']}',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
           ),
           const SizedBox(height: 12),
           Row(
@@ -287,7 +378,10 @@ class _CourseCard extends StatelessWidget {
               ),
               Text(
                 '${course['progress']}% done',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -305,7 +399,19 @@ class _CourseCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Removed edit/delete buttons - admin view only
+          // Edit Button
+          const Spacer(),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit, size: 16),
+              label: const Text('Edit Teacher'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF8B5E3C),
+              ),
+            ),
+          ),
         ],
       ),
     );

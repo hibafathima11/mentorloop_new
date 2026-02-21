@@ -357,6 +357,13 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
                                 ],
                               ),
                             ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.edit,
+                                color: Color(0xFF8B5E3C),
+                              ),
+                              onPressed: () => _showEditDialog(c),
+                            ),
                           ],
                         ),
                       );
@@ -366,6 +373,115 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditDialog(Course course) {
+    final titleController = TextEditingController(text: course.title);
+    final descriptionController = TextEditingController(
+      text: course.description,
+    );
+    String? selectedTeacherId = course.teacherId;
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Edit Course'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _field(
+                    context,
+                    controller: titleController,
+                    label: 'Title',
+                    validator: _required,
+                  ),
+                  const SizedBox(height: 16),
+                  _field(
+                    context,
+                    controller: descriptionController,
+                    label: 'Description',
+                    maxLines: 3,
+                    validator: _required,
+                  ),
+                  const SizedBox(height: 16),
+                  StreamBuilder<List<UserProfile>>(
+                    stream: DataService.streamTeachers(),
+                    builder: (context, snapshot) {
+                      final teachers = snapshot.data ?? [];
+                      return DropdownButtonFormField<String>(
+                        value: selectedTeacherId,
+                        items: teachers.map((t) {
+                          final displayName = t.name.isNotEmpty
+                              ? t.name
+                              : t.email;
+                          return DropdownMenuItem(
+                            value: t.uid,
+                            child: Text(displayName),
+                          );
+                        }).toList(),
+                        onChanged: (v) =>
+                            setDialogState(() => selectedTeacherId = v),
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Required' : null,
+                        decoration: InputDecoration(
+                          labelText: "Teacher",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                try {
+                  final updatedCourse = Course(
+                    id: course.id,
+                    title: titleController.text.trim(),
+                    description: descriptionController.text.trim(),
+                    teacherId: selectedTeacherId ?? '',
+                    studentIds: course.studentIds,
+                  );
+                  await DataService.updateCourse(course.id, updatedCourse);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Course updated')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8B5E3C),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Save'),
+            ),
+          ],
         ),
       ),
     );
