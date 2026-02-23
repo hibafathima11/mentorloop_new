@@ -48,4 +48,41 @@ class AnalyticsService {
     }
     return total == 0 ? 0 : correct / total;
   }
+
+  /// Returns list of {id, title} for assignments in the course.
+  static Future<List<Map<String, String>>> getAssignmentsForCourse(
+    String courseId,
+  ) async {
+    final qs = await _db
+        .collection('assignments')
+        .where('courseId', isEqualTo: courseId)
+        .get();
+    return qs.docs.map((d) {
+      final data = d.data();
+      return {
+        'id': d.id,
+        'title': (data['title'] as String?) ?? 'Untitled',
+      };
+    }).toList();
+  }
+
+  /// Returns student IDs enrolled in the course.
+  static Future<List<String>> getCourseStudentIds(String courseId) async {
+    final doc = await _db.collection('courses').doc(courseId).get();
+    if (!doc.exists) return [];
+    final data = doc.data();
+    final list = data?['studentIds'] as List<dynamic>?;
+    return list?.map((e) => e.toString()).toList() ?? [];
+  }
+
+  /// Returns display name for a user (name or email).
+  static Future<String> getUserDisplayName(String uid) async {
+    final doc = await _db.collection('users').doc(uid).get();
+    if (!doc.exists) return uid;
+    final data = doc.data();
+    final name = (data?['name'] as String?)?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    final email = (data?['email'] as String?)?.trim();
+    return email ?? uid;
+  }
 }

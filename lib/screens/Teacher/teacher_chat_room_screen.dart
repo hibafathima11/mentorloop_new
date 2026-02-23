@@ -105,6 +105,11 @@ class _TeacherChatRoomScreenState extends State<TeacherChatRoomScreen> {
     return Scaffold(
       backgroundColor: AppColors.secondaryBackground,
       appBar: AppBar(
+        iconTheme: const IconThemeData(color: Color(0xFF8B5E3C)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           widget.otherUserName,
           style: const TextStyle(color: Color(0xFF8B5E3C)),

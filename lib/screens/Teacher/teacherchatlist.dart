@@ -286,6 +286,11 @@ class _TeacherChatRoomScreenState extends State<TeacherChatRoomScreen> {
       backgroundColor: const Color(0xFFF7F3EF),
       appBar: AppBar(
         backgroundColor: const Color(0xFF8B5E3C),
+        iconTheme: const IconThemeData(color: Colors.white),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Row(
           children: [
             CircleAvatar(

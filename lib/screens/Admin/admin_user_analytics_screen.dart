@@ -195,6 +195,11 @@ class _AdminUserAnalyticsScreenState extends State<AdminUserAnalyticsScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: ListTile(
+                                  onTap: () => _showStudentDetails(
+                                    studentId,
+                                    userData,
+                                    count,
+                                  ),
                                   leading: CircleAvatar(
                                     backgroundColor: const Color(
                                       0xFF8B5E3C,
@@ -479,6 +484,233 @@ class _AdminUserAnalyticsScreenState extends State<AdminUserAnalyticsScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  void _showStudentDetails(
+    String studentId,
+    Map<String, dynamic> userData,
+    int activityCount,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 30,
+                          backgroundColor: const Color(0xFF8B5E3C).withOpacity(0.1),
+                          backgroundImage: userData['photoUrl'] != null
+                              ? NetworkImage(userData['photoUrl'] as String)
+                              : null,
+                          child: userData['photoUrl'] == null
+                              ? Text(
+                                  (userData['name'] ?? 'S').toString()[0].toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Color(0xFF8B5E3C),
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                userData['name'] ?? 'Unknown Name',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                userData['email'] ?? '',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF8B5E3C).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '$activityCount activities (last 7 days)',
+                                  style: const TextStyle(
+                                    color: Color(0xFF8B5E3C),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _detailTile(
+                      Icons.phone,
+                      'Phone',
+                      userData['phone']?.toString() ?? 'N/A',
+                    ),
+                    _detailTile(
+                      Icons.calendar_today,
+                      'Registered',
+                      userData['createdAt'] != null
+                          ? (userData['createdAt'] as Timestamp).toDate().toString().split(' ')[0]
+                          : 'N/A',
+                    ),
+                    const Divider(height: 40),
+                    const Text(
+                      'Guardian Information',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF8B5E3C),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FutureBuilder<QuerySnapshot>(
+                      future: FirebaseFirestore.instance
+                          .collection('guardians')
+                          .where('studentId', isEqualTo: studentId)
+                          .get(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return const Text('No guardian details found');
+                        }
+                        final guardian = snapshot.data!.docs.first.data()
+                            as Map<String, dynamic>;
+                        return Column(
+                          children: [
+                            _detailTile(
+                              Icons.person,
+                              'Name',
+                              guardian['name']?.toString() ?? 'N/A',
+                            ),
+                            _detailTile(
+                              Icons.family_restroom,
+                              'Relation',
+                              guardian['relation']?.toString() ?? 'N/A',
+                            ),
+                            _detailTile(
+                              Icons.phone,
+                              'Phone',
+                              guardian['phone']?.toString() ?? 'N/A',
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Applied Courses',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF8B5E3C),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FutureBuilder<QuerySnapshot>(
+                      future: FirebaseFirestore.instance
+                          .collection('courses')
+                          .where('studentIds', arrayContains: studentId)
+                          .get(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return const Text('No courses applied yet');
+                        }
+                        return Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: snapshot.data!.docs.map((doc) {
+                            final course = doc.data() as Map<String, dynamic>;
+                            return Chip(
+                              label: Text(course['title'] ?? 'Course'),
+                              backgroundColor: const Color(0xFF8B5E3C).withOpacity(0.1),
+                              labelStyle: const TextStyle(color: Color(0xFF8B5E3C)),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B5E3C),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Close Details',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _detailTile(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.grey[600], size: 20),
+          const SizedBox(width: 12),
+          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(child: Text(value)),
+        ],
       ),
     );
   }

@@ -8,6 +8,7 @@ import 'package:mentorloop_new/screens/Student/course_screen.dart';
 import 'package:mentorloop_new/screens/Student/my_courses_screen.dart';
 import 'package:mentorloop_new/screens/Student/messages_screen.dart';
 import 'package:mentorloop_new/screens/Student/exam_list_screen.dart';
+import 'package:mentorloop_new/screens/Student/student_complaints_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mentorloop_new/utils/auth_service.dart';
 import 'package:mentorloop_new/utils/data_service.dart';
@@ -584,36 +585,76 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      child: ListTile(
-        tileColor: const Color(0xFFFFF3E0),
+      child: Card(
+        color: const Color(0xFFFFF3E0),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: const Icon(
-          Icons.report_problem,
-          color: Color(0xFFD32F2F),
-          size: 36,
-        ),
-        title: const Text(
-          'Submit a Complaint',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF8B5E3C),
-            fontSize: 18,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.report_problem,
+                    color: Color(0xFFD32F2F),
+                    size: 36,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Submit a Complaint',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF8B5E3C),
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Send your complaint directly to admin',
+                          style: TextStyle(color: Color(0xFF8B5E3C), fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD32F2F),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Add'),
+                    onPressed: () => _showComplaintDialog(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const StudentComplaintsScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.inbox, size: 20, color: Color(0xFF8B5E3C)),
+                label: const Text(
+                  'My complaints & replies',
+                  style: TextStyle(
+                    color: Color(0xFF8B5E3C),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        subtitle: const Text(
-          'Send your complaint directly to admin',
-          style: TextStyle(color: Color(0xFF8B5E3C)),
-        ),
-        trailing: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFD32F2F),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: const Text('Add'),
-          onPressed: () => _showComplaintDialog(context),
         ),
       ),
     );

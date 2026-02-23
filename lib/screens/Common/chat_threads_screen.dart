@@ -246,6 +246,11 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     return Scaffold(
       backgroundColor: AppColors.secondaryBackground,
       appBar: AppBar(
+        iconTheme: const IconThemeData(color: Color(0xFF8B5E3C)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: widget.thread.title.isNotEmpty
             ? Text(
                 widget.thread.title,
