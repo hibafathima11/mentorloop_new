@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mentorloop_new/web/screens/landing_page.dart';
+import 'package:mentorloop_new/web/screens/admin_login_screen.dart';
 
 class AdminLayout extends StatefulWidget {
   final Widget child;
@@ -187,7 +191,24 @@ class _AdminLayoutState extends State<AdminLayout> {
         color: isActive ? const Color(0xFF8B5E3C).withOpacity(0.1) : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
-          onTap: () {},
+          onTap: () async {
+            if (isLogout) {
+              await FirebaseAuth.instance.signOut();
+              if (!mounted) return;
+              if (kIsWeb) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LandingPage()),
+                  (route) => false,
+                );
+              } else {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+                  (route) => false,
+                );
+              }
+              return;
+            }
+          },
           borderRadius: BorderRadius.circular(8),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),

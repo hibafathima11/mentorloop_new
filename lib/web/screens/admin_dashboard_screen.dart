@@ -3,6 +3,10 @@ import 'package:mentorloop_new/utils/responsive.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mentorloop_new/web/screens/notificationscreen.dart';
 import 'package:mentorloop_new/web/screens/settings_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:mentorloop_new/web/screens/landing_page.dart';
+import 'package:mentorloop_new/web/screens/admin_login_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -61,6 +65,24 @@ class AdminDashboardScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(builder: (_) => const SettingsScreen()),
                   );
+                },
+              ),
+              const SizedBox(width: 12),
+              _CircleIconButton(
+                icon: Icons.logout,
+                onTap: () async {
+                  await FirebaseAuth.instance.signOut();
+                  if (kIsWeb) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LandingPage()),
+                      (route) => false,
+                    );
+                  } else {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+                      (route) => false,
+                    );
+                  }
                 },
               ),
             ],
