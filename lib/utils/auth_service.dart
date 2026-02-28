@@ -155,25 +155,21 @@ class AuthService {
 
     // Send approval email notification
     if (email.isNotEmpty) {
-      try {
-        final displayName = name.isNotEmpty ? name : email.split('@').first;
-        await EmailService.sendEmail(
-          templateParams: {
-            'to_email': email,
-            'subject': 'Your MentorLoop Account Has Been Approved',
-            'name': displayName,
-            'time': DateTime.now().toString().split('.')[0],
-            'message':
-                'Hello ${displayName},\n\n'
-                'Your MentorLoop student account has been approved by the administrator.\n\n'
-                'You can now log in to your account using your registered email and password.\n\n'
-                'Best regards,\n'
-                'MentorLoop Team',
-          },
-        );
-      } catch (_) {
-        // Silently ignore email errors - approval still succeeds
-      }
+      final displayName = name.isNotEmpty ? name : email.split('@').first;
+      await EmailService.sendEmail(
+        templateParams: {
+          'to_email': email,
+          'subject': 'Your MentorLoop Account Has Been Approved',
+          'name': displayName,
+          'time': DateTime.now().toString().split('.')[0],
+          'message':
+              'Hello ${displayName},\n\n'
+              'Your MentorLoop student account has been approved by the administrator.\n\n'
+              'You can now log in to your account using your registered email and password.\n\n'
+              'Best regards,\n'
+              'MentorLoop Team',
+        },
+      );
     }
   }
 

@@ -74,17 +74,29 @@ class AdminParentVerificationScreen extends StatelessWidget {
                         children: [
                           ElevatedButton.icon(
                             onPressed: () async {
-                              await _approveParentRequest(d.id, data);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Parent approved successfully!\n✅ Email notification sent.',
+                              try {
+                                await _approveParentRequest(d.id, data);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Parent approved successfully!\n✅ Email notification sent.',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                      duration: Duration(seconds: 4),
                                     ),
-                                    backgroundColor: Colors.green,
-                                    duration: Duration(seconds: 4),
-                                  ),
-                                );
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error: $e'),
+                                      backgroundColor: Colors.red,
+                                      duration: const Duration(seconds: 6),
+                                    ),
+                                  );
+                                }
                               }
                             },
                             icon: const Icon(Icons.check),
@@ -160,30 +172,26 @@ class AdminParentVerificationScreen extends StatelessWidget {
     // Send approval email notification to parent
     final parentEmail = data['parentEmail'] as String? ?? '';
     if (parentEmail.isNotEmpty) {
-      try {
-        // Get parent name from user document
-        final parentDoc = await db.collection('users').doc(parentId).get();
-        final parentData = parentDoc.data() ?? {};
-        final parentName = parentData['name'] as String? ?? '';
-        
-        final displayName = parentName.isNotEmpty ? parentName : parentEmail.split('@').first;
-        await EmailService.sendEmail(
-          templateParams: {
-            'to_email': parentEmail,
-            'subject': 'Your MentorLoop Parent Account Has Been Approved',
-            'name': displayName,
-            'time': DateTime.now().toString().split('.')[0],
-            'message':
-                'Hello ${displayName},\n\n'
-                'Your MentorLoop parent account has been approved by the administrator.\n\n'
-                'You can now log in to your account using your registered email and password.\n\n'
-                'Best regards,\n'
-                'MentorLoop Team',
-          },
-        );
-      } catch (_) {
-        // Silently ignore email errors - approval still succeeds
-      }
+      // Get parent name from user document
+      final parentDoc = await db.collection('users').doc(parentId).get();
+      final parentData = parentDoc.data() ?? {};
+      final parentName = parentData['name'] as String? ?? '';
+
+      final displayName =
+          parentName.isNotEmpty ? parentName : parentEmail.split('@').first;
+      await EmailService.sendEmail(
+        templateParams: {
+          'to_email': parentEmail,
+          'subject': 'Your MentorLoop Parent Account Has Been Approved',
+          'name': displayName,
+          'time': DateTime.now().toString().split('.')[0],
+          'message': 'Hello ${displayName},\n\n'
+              'Your MentorLoop parent account has been approved by the administrator.\n\n'
+              'You can now log in to your account using your registered email and password.\n\n'
+              'Best regards,\n'
+              'MentorLoop Team',
+        },
+      );
     }
   }
 
