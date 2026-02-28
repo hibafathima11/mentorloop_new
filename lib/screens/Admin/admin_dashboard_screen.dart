@@ -5,6 +5,7 @@ import 'package:mentorloop_new/screens/Admin/student_approval_screen.dart';
 import 'package:mentorloop_new/screens/Admin/teacher_credentials_screen.dart';
 import 'package:mentorloop_new/utils/auth_service.dart';
 import 'package:mentorloop_new/screens/Common/login_screen.dart';
+import 'package:mentorloop_new/web/screens/landing_page.dart';
 import 'package:mentorloop_new/screens/Admin/admin_subjects_screen.dart';
 import 'package:mentorloop_new/screens/Admin/admin_parent_verification_screen.dart';
 import 'package:mentorloop_new/screens/Admin/admin_user_analytics_screen.dart';
@@ -83,14 +84,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.logout, color: Color(0xFF8B5E3C)),
-            onPressed: () async {
-              await AuthService.signOut();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
+            onPressed: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LandingPage()),
+                (route) => false,
+              );
             },
           ),
         ],
