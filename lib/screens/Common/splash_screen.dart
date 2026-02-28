@@ -65,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen>
       final String role = (data['role'] as String?) ?? '';
       final bool isApproved = (data['approved'] as bool?) ?? false;
 
-      if (role == 'student' && !isApproved) {
+      if ((role == 'student' || role == 'parent') && !isApproved) {
         // Pending approval; sign out to block access until approved
         await FirebaseAuth.instance.signOut();
         if (!mounted) return;

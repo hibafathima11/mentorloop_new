@@ -97,6 +97,8 @@ class _LoginScreenState extends State<LoginScreen>
 
       // Check if student/parent is approved
       if ((role == 'student' || role == 'parent') && !approved) {
+        await AuthService.signOut();
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -148,6 +150,8 @@ class _LoginScreenState extends State<LoginScreen>
       final bool approved = (profile['approved'] as bool?) ?? false;
 
       if ((role == 'student' || role == 'parent') && !approved) {
+        await AuthService.signOut();
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(

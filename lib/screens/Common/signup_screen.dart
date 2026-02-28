@@ -93,11 +93,17 @@ class _SignupScreenState extends State<SignupScreen> {
             idUrl: idUrl,
           );
         } else {
-          // Auto-linked successfully - approve parent immediately
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(cred.user!.uid)
-              .update({'approved': true});
+          // Auto-linked successfully - but still require admin approval as per user request
+          // Get student email for the verification request
+          final studentDoc = await FirebaseFirestore.instance.collection('users').doc(linkedStudentId).get();
+          final studentEmail = studentDoc.data()?['email'] ?? '';
+          
+          await AuthService.createParentVerificationRequest(
+            parentId: cred.user!.uid,
+            parentEmail: _emailController.text.trim(),
+            studentEmail: studentEmail,
+            idUrl: '', // No ID uploaded for auto-link via email
+          );
         }
       }
 
@@ -105,8 +111,14 @@ class _SignupScreenState extends State<SignupScreen> {
       await AuthService.signOut();
 
       if (!mounted) return;
+      
+      String message = 'Account created. Please log in.';
+      if (_selectedRole == 'student' || _selectedRole == 'parent') {
+        message = 'Registration successful. Please wait for admin approval.';
+      }
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created. Please log in.')),
+        SnackBar(content: Text(message)),
       );
 
       Navigator.pushReplacement(

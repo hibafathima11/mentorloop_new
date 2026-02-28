@@ -52,12 +52,21 @@ class AdminParentVerificationScreen extends StatelessWidget {
                       if (idUrl.isNotEmpty)
                         InkWell(
                           onTap: () {},
-                          child: Text(
+                          child: const Text(
                             'View ID',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.blue,
                               decoration: TextDecoration.underline,
                             ),
+                          ),
+                        )
+                      else
+                        const Text(
+                          'Auto-linked via email (No ID provided)',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontStyle: FontStyle.italic,
+                            fontSize: 12,
                           ),
                         ),
                       const SizedBox(height: 12),
