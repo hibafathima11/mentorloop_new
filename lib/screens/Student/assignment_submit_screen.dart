@@ -72,8 +72,9 @@ class _AssignmentSubmitScreenState extends State<AssignmentSubmitScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('File uploaded successfully')),
+          const SnackBar(content: Text('File uploaded successfully. Submitting...')),
         );
+        _submit(); // Auto-submit after upload
       }
     } catch (e) {
       setState(() => _isUploading = false);

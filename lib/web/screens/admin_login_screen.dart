@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mentorloop_new/screens/Admin/admin_dashboard_screen.dart';
 
 
@@ -43,10 +44,22 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     }
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+
+      // Check role
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+      
+      final role = (userDoc.data()?['role'] as String?)?.toLowerCase();
+      if (role != 'admin') {
+        await FirebaseAuth.instance.signOut();
+        throw Exception('Access denied. Only admins can log in here.');
+      }
 
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
@@ -57,7 +70,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message ?? 'Login failed');
     } catch (e) {
-      setState(() => _error = 'An error occurred: $e');
+      setState(() => _error = e.toString().contains('Exception:') ? e.toString().split('Exception: ')[1] : e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

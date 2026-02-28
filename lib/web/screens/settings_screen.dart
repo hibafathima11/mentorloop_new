@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mentorloop_new/utils/responsive.dart';
 import 'package:mentorloop_new/utils/auth_service.dart';
+import 'package:mentorloop_new/utils/debouncer.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,6 +17,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
+  
+  final _debouncer = Debouncer(milliseconds: 500);
+  bool _isAutoSaving = false;
   
   bool _isLoading = false;
   bool _notificationsEnabled = true;
@@ -43,19 +47,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         if (userDoc.exists) {
           final data = userDoc.data()!;
-          setState(() {
-            _nameController.text = data['name'] ?? '';
-            _emailController.text = data['email'] ?? '';
-            _phoneController.text = data['phone'] ?? '';
-            _bioController.text = data['bio'] ?? '';
-            _userRole = data['role'] ?? '';
-            _notificationsEnabled = data['notifications'] ?? true;
-          });
+          if (mounted) {
+            setState(() {
+              _nameController.text = data['name'] ?? '';
+              _emailController.text = data['email'] ?? '';
+              _phoneController.text = data['phone'] ?? '';
+              _bioController.text = data['bio'] ?? '';
+              _userRole = data['role'] ?? '';
+              _notificationsEnabled = data['notifications'] ?? true;
+            });
+          }
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading user data: $e')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error loading user data: $e')),
+          );
+        }
       }
     }
   }
@@ -66,7 +74,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _emailController.dispose();
     _phoneController.dispose();
     _bioController.dispose();
+    _debouncer.dispose();
     super.dispose();
+  }
+  
+  void _onFieldChanged() {
+     _debouncer.run(() {
+        _updateProfile(silent: true);
+     });
   }
 
   @override
@@ -77,7 +92,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+          if (_isAutoSaving)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                children: [
+                   SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2)),
+                   SizedBox(width: 8),
+                   Text('Auto-saving...', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                ],
+              ),
+            ),
+          const SizedBox(height: 12),
           _buildProfileSection(),
           const SizedBox(height: 24),
           _buildPreferencesSection(),
@@ -137,6 +164,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             controller: _nameController,
             label: 'Full Name',
             icon: Icons.person_outline,
+            onChanged: (_) => _onFieldChanged(),
           ),
           const SizedBox(height: 16),
           _buildTextField(
@@ -150,6 +178,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             controller: _phoneController,
             label: 'Phone Number',
             icon: Icons.phone_outlined,
+            onChanged: (_) => _onFieldChanged(),
           ),
           const SizedBox(height: 16),
           _buildTextField(
@@ -157,6 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             label: 'Bio',
             icon: Icons.info_outline,
             maxLines: 3,
+            onChanged: (_) => _onFieldChanged(),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -365,11 +395,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     bool enabled = true,
     int maxLines = 1,
+    ValueChanged<String>? onChanged,
   }) {
     return TextFormField(
       controller: controller,
       enabled: enabled,
       maxLines: maxLines,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
@@ -434,10 +466,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _updateProfile() async {
+  Future<void> _updateProfile({bool silent = false}) async {
     if (_userId.isEmpty) return;
 
-    setState(() => _isLoading = true);
+    if (silent) {
+       setState(() => _isAutoSaving = true);
+    } else {
+       setState(() => _isLoading = true);
+    }
 
     try {
       await FirebaseFirestore.instance
@@ -451,20 +487,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      if (mounted) {
+      if (mounted && !silent) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully!')),
         );
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && !silent) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error updating profile: $e')),
         );
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _isAutoSaving = false;
+        });
       }
     }
   }

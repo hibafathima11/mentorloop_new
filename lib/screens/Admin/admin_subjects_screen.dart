@@ -3,6 +3,8 @@ import 'package:mentorloop_new/utils/colors.dart';
 import 'package:mentorloop_new/utils/responsive.dart';
 import 'package:mentorloop_new/utils/data_service.dart';
 import 'package:mentorloop_new/models/entities.dart';
+import 'package:mentorloop_new/utils/debouncer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AdminSubjectsScreen extends StatefulWidget {
   const AdminSubjectsScreen({super.key});
@@ -13,17 +15,61 @@ class AdminSubjectsScreen extends StatefulWidget {
 
 class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _title = TextEditingController();
-  final _description = TextEditingController();
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _debouncer = Debouncer(milliseconds: 700);
+  String? _currentlyEditingId;
   String? _selectedTeacherId;
   bool _saving = false;
+  bool _isAutoSaving = false;
 
   @override
   void dispose() {
-    _title.dispose();
-    _description.dispose();
+    _titleController.dispose();
+    _descriptionController.dispose();
 
     super.dispose();
+  }
+
+  void _onFieldChanged() {
+    _debouncer.run(() async {
+       await _autoSaveCourse();
+    });
+  }
+
+  Future<void> _autoSaveCourse() async {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) return;
+
+    if (mounted) setState(() => _isAutoSaving = true);
+    try {
+      if (_currentlyEditingId == null) {
+        // Create new
+        final course = Course(
+          id: '',
+          title: title,
+          description: _descriptionController.text.trim(),
+          teacherId: _selectedTeacherId ?? '',
+          studentIds: const [],
+        );
+        final id = await DataService.createCourse(course);
+        if (mounted) setState(() => _currentlyEditingId = id);
+      } else {
+        // Update existing
+        final course = Course(
+          id: _currentlyEditingId!,
+          title: title,
+          description: _descriptionController.text.trim(),
+          teacherId: _selectedTeacherId ?? '',
+          studentIds: const [],
+        );
+        await DataService.updateCourse(_currentlyEditingId!, course);
+      }
+    } catch (e) {
+      debugPrint('Auto-save error: $e');
+    } finally {
+       if (mounted) setState(() => _isAutoSaving = false);
+    }
   }
 
   Future<void> _createCourse() async {
@@ -32,14 +78,14 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
     try {
       final course = Course(
         id: '',
-        title: _title.text.trim(),
-        description: _description.text.trim(),
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
         teacherId: _selectedTeacherId ?? '',
         studentIds: const [],
       );
       await DataService.createCourse(course);
-      _title.clear();
-      _description.clear();
+      _titleController.clear();
+      _descriptionController.clear();
       _selectedTeacherId = null;
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -109,15 +155,20 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
                     ),
                   ],
                 ),
-                child: Form(
-                  key: _formKey,
+                child: Column(
+                  children: [
+                    if (_isAutoSaving)
+                      const LinearProgressIndicator(minHeight: 2),
+                    Form(
+                      key: _formKey,
                   child: Column(
                     children: [
                       _field(
                         context,
-                        controller: _title,
+                        controller: _titleController,
                         label: 'Title',
                         validator: _required,
+                        onChanged: (_) => _onFieldChanged(),
                       ),
                       SizedBox(
                         height: ResponsiveHelper.getResponsiveMargin(
@@ -129,10 +180,11 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
                       ),
                       _field(
                         context,
-                        controller: _description,
+                        controller: _descriptionController,
                         label: 'Description',
                         maxLines: 3,
                         validator: _required,
+                        onChanged: (_) => _onFieldChanged(),
                       ),
                       SizedBox(
                         height: ResponsiveHelper.getResponsiveMargin(
@@ -170,8 +222,10 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
                                       child: Text(displayName),
                                     );
                                   }).toList(),
-                                  onChanged: (v) =>
-                                      setState(() => _selectedTeacherId = v),
+                                  onChanged: (v) {
+                                    setState(() => _selectedTeacherId = v);
+                                    _onFieldChanged();
+                                  },
                                   validator: (v) => v == null || v.isEmpty
                                       ? 'Required'
                                       : null,
@@ -214,7 +268,18 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
                           context,
                         ),
                         child: ElevatedButton(
-                          onPressed: _saving ? null : _createCourse,
+                          onPressed: () {
+                             if (_currentlyEditingId != null) {
+                                _titleController.clear();
+                                _descriptionController.clear();
+                                setState(() {
+                                   _currentlyEditingId = null;
+                                   _selectedTeacherId = null;
+                                });
+                             } else {
+                                _createCourse();
+                             }
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF8B5E3C),
                             foregroundColor: Colors.white,
@@ -226,16 +291,7 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
                               ),
                             ),
                           ),
-                          child: _saving
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text('Create Course'),
+                          child: Text(_currentlyEditingId != null ? 'Finish & Clear' : 'Create Course'),
                         ),
                       ),
                     ],
@@ -496,11 +552,13 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
     required String label,
     int maxLines = 1,
     String? Function(String?)? validator,
+    ValueChanged<String>? onChanged,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       validator: validator,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(

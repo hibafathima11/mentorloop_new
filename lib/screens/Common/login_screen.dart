@@ -59,17 +59,19 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = true);
 
     try {
-      // Handle hardcoded admin login without hitting Firebase
       final email = _emailController.text.trim().toLowerCase();
       final password = _passwordController.text.trim();
+
+      // Handle hardcoded admin login
       final isAdminEmail = email == 'admin@example.com' || email == 'admin';
       if (isAdminEmail && password == '123456') {
+        if (!kIsWeb) {
+          throw Exception('Admin access is restricted to Web only.');
+        }
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Admin login successful')));
-        final Widget destination = kIsWeb
-            ? const web_admin.AdminDashboardScreen()
-            : const AdminDashboardScreen();
+        final Widget destination = const web_admin.AdminDashboardScreen();
         Navigator.of(context).pushReplacementSlide(
           destination,
           direction: SlideDirection.left,
@@ -77,13 +79,12 @@ class _LoginScreenState extends State<LoginScreen>
         return;
       }
 
-      // Teacher invite fallback aware login
+      // Regular login
       final userCredential = await AuthService.loginWithTeacherInviteFallback(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
+        email: email,
+        password: password,
       );
 
-      // Get user profile to check role and approval
       final userProfile = await AuthService.getUserProfile(
         userCredential.user!.uid,
       );
@@ -92,8 +93,22 @@ class _LoginScreenState extends State<LoginScreen>
         throw Exception('User profile not found');
       }
 
-      final role = userProfile['role'] as String?;
+      final role = (userProfile['role'] as String?)?.toLowerCase();
       final approved = userProfile['approved'] as bool? ?? false;
+
+      // Platform Access Control
+      if (role == 'admin') {
+        if (!kIsWeb) {
+          await AuthService.signOut();
+          throw Exception('Admin access is restricted to Web only.');
+        }
+      } else {
+        // Other users (student, teacher, parent)
+        if (kIsWeb) {
+          await AuthService.signOut();
+          throw Exception('Mobile app users cannot access the Web version.');
+        }
+      }
 
       // Check if student/parent is approved
       if ((role == 'student' || role == 'parent') && !approved) {
@@ -122,6 +137,9 @@ class _LoginScreenState extends State<LoginScreen>
         case 'parent':
           destination = const ParentDashboardScreen();
           break;
+        case 'admin':
+          destination = kIsWeb ? const web_admin.AdminDashboardScreen() : const AdminDashboardScreen();
+          break;
         default:
           throw Exception('Invalid user role');
       }
@@ -133,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen>
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Login failed: $e'),
+          content: Text('$e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -146,8 +164,21 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isGoogleLoading = true);
     try {
       final profile = await AuthService.signInWithGoogleAndEnsureProfile();
-      final String role = (profile['role'] as String?) ?? 'student';
+      final String role = ((profile['role'] as String?) ?? 'student').toLowerCase();
       final bool approved = (profile['approved'] as bool?) ?? false;
+
+      // Platform Access Control
+      if (role == 'admin') {
+        if (!kIsWeb) {
+          await AuthService.signOut();
+          throw Exception('Admin access is restricted to Web only.');
+        }
+      } else {
+        if (kIsWeb) {
+          await AuthService.signOut();
+          throw Exception('Mobile app users cannot access the Web version.');
+        }
+      }
 
       if ((role == 'student' || role == 'parent') && !approved) {
         await AuthService.signOut();
@@ -174,6 +205,9 @@ class _LoginScreenState extends State<LoginScreen>
         case 'parent':
           destination = const ParentDashboardScreen();
           break;
+        case 'admin':
+          destination = kIsWeb ? const web_admin.AdminDashboardScreen() : const AdminDashboardScreen();
+          break;
         default:
           destination = const StudentHomeScreen();
       }
@@ -187,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Google Sign-In failed: $e'),
+          content: Text('$e'),
           backgroundColor: Colors.red,
         ),
       );
