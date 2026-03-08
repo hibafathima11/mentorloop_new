@@ -109,31 +109,43 @@ class WebAdminDashboard extends StatelessWidget {
           FutureBuilder<Map<String, dynamic>>(
             future: () async {
               final db = FirebaseFirestore.instance;
-              final usersSnap = await db.collection('users').get();
-              final coursesSnap = await db.collection('courses').get();
-              final assignmentsSnap = await db.collection('assignments').get();
+              final usersSnap = await db.collection('users').count().get();
+              final coursesSnap = await db.collection('courses').count().get();
+              final assignmentsSnap = await db
+                  .collection('assignments')
+                  .count()
+                  .get();
               final pendingSnap = await db
                   .collection('users')
                   .where('approved', isEqualTo: false)
+                  .count()
                   .get();
               final studentsSnap = await db
                   .collection('users')
                   .where('role', isEqualTo: 'student')
+                  .count()
                   .get();
               final teachersSnap = await db
                   .collection('users')
                   .where('role', isEqualTo: 'teacher')
+                  .count()
                   .get();
-              final examsSnap = await db.collection('exams').get();
+              final parentsSnap = await db
+                  .collection('users')
+                  .where('role', isEqualTo: 'parent')
+                  .count()
+                  .get();
+              final examsSnap = await db.collection('exams').count().get();
 
               return {
-                'users': usersSnap.size,
-                'students': studentsSnap.size,
-                'teachers': teachersSnap.size,
-                'courses': coursesSnap.size,
-                'assignments': assignmentsSnap.size,
-                'exams': examsSnap.size,
-                'pending': pendingSnap.size,
+                'users': usersSnap.count ?? 0,
+                'students': studentsSnap.count ?? 0,
+                'teachers': teachersSnap.count ?? 0,
+                'parents': parentsSnap.count ?? 0,
+                'courses': coursesSnap.count ?? 0,
+                'assignments': assignmentsSnap.count ?? 0,
+                'exams': examsSnap.count ?? 0,
+                'pending': pendingSnap.count ?? 0,
               };
             }(),
             builder: (context, snap) {
@@ -150,6 +162,7 @@ class WebAdminDashboard extends StatelessWidget {
                     'users': 0,
                     'students': 0,
                     'teachers': 0,
+                    'parents': 0,
                     'courses': 0,
                     'assignments': 0,
                     'exams': 0,
@@ -161,7 +174,7 @@ class WebAdminDashboard extends StatelessWidget {
                   'value': data['users'].toString(),
                   'icon': Icons.people,
                   'subtitle':
-                      '${data['students']} students, ${data['teachers']} teachers',
+                      '${data['students']} students, ${data['teachers']} teachers, ${data['parents']} parents',
                   'color': const Color(0xFF8B5E3C),
                 },
                 {
@@ -257,7 +270,6 @@ class WebAdminDashboard extends StatelessWidget {
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('users')
-                .orderBy('createdAt', descending: true)
                 .limit(10)
                 .snapshots(),
             builder: (context, snapshot) {
