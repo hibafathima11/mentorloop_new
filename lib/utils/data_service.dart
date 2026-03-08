@@ -221,6 +221,15 @@ class DataService {
         );
   }
 
+  static Stream<List<Assignment>> watchAllAssignments() {
+    return _db
+        .collection('assignments')
+        .snapshots()
+        .map(
+          (s) => s.docs.map((d) => Assignment.fromMap(d.id, d.data())).toList(),
+        );
+  }
+
   static Future<String> submitAssignment(Submission s) async {
     final ref = await _db.collection('submissions').add(s.toMap());
     return ref.id;
@@ -355,7 +364,9 @@ class DataService {
         .collection('chat_threads')
         .where('memberIds', arrayContains: uid)
         .snapshots()
-        .map((s) => s.docs.map((d) => ChatThread.fromMap(d.id, d.data())).toList());
+        .map(
+          (s) => s.docs.map((d) => ChatThread.fromMap(d.id, d.data())).toList(),
+        );
   }
 
   static Stream<List<ChatMessage>> watchThreadMessages(String threadId) {
@@ -364,15 +375,14 @@ class DataService {
         .where('threadId', isEqualTo: threadId)
         .snapshots()
         .map(
-          (s) => s.docs
-              .map((d) => ChatMessage.fromMap(d.id, d.data()))
-              .toList()
-            ..sort((a, b) {
-              if (a.createdAt == null && b.createdAt == null) return 0;
-              if (a.createdAt == null) return 1;
-              if (b.createdAt == null) return -1;
-              return a.createdAt!.compareTo(b.createdAt!);
-            }),
+          (s) =>
+              s.docs.map((d) => ChatMessage.fromMap(d.id, d.data())).toList()
+                ..sort((a, b) {
+                  if (a.createdAt == null && b.createdAt == null) return 0;
+                  if (a.createdAt == null) return 1;
+                  if (b.createdAt == null) return -1;
+                  return a.createdAt!.compareTo(b.createdAt!);
+                }),
         );
   }
 

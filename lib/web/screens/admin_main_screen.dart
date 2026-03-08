@@ -7,6 +7,12 @@ import 'package:mentorloop_new/screens/Admin/student_approval_screen.dart';
 import 'package:mentorloop_new/screens/Admin/teacher_credentials_screen.dart';
 import 'package:mentorloop_new/screens/Admin/admin_parent_verification_screen.dart';
 import 'package:mentorloop_new/screens/Admin/admin_subjects_screen.dart';
+import 'package:mentorloop_new/web/screens/assignments_management_screen.dart';
+import 'package:mentorloop_new/web/screens/exams_management_screen.dart';
+import 'package:mentorloop_new/web/screens/analytics_screen.dart';
+import 'package:mentorloop_new/screens/Admin/admin_complaints_screen.dart';
+import 'package:mentorloop_new/screens/Admin/admin_parent_feedback_screen.dart';
+import 'package:mentorloop_new/screens/Admin/admin_teacher_chat_screen.dart';
 
 class AdminMainScreen extends StatefulWidget {
   const AdminMainScreen({super.key});
@@ -29,6 +35,9 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     'Assignments',
     'Exams',
     'User Analytics',
+    'View Complaints',
+    'Parent Feedback',
+    'Chat with Teacher',
   ];
 
   Widget _buildContent() {
@@ -48,14 +57,17 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       case 6:
         return const CoursesManagementScreen();
       case 7:
-        // Assignments Screen
-        return const Center(child: Text("Assignments Screen Coming Soon"));
+        return const AssignmentsManagementScreen();
       case 8:
-        // Exams Screen
-        return const Center(child: Text("Exams Screen Coming Soon"));
+        return const ExamsManagementScreen();
       case 9:
-        // User Analytics Screen
-        return const Center(child: Text("User Analytics Screen Coming Soon"));
+        return const AnalyticsScreen();
+      case 10:
+        return const AdminComplaintsScreen();
+      case 11:
+        return const AdminParentFeedbackScreen();
+      case 12:
+        return const AdminTeacherChatScreen();
       default:
         return Center(
           child: Text(
