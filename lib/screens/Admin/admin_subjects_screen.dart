@@ -40,7 +40,9 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
 
   Future<void> _autoSaveCourse() async {
     final title = _titleController.text.trim();
-    if (title.isEmpty) return;
+    final desc = _descriptionController.text.trim();
+    final teacherId = _selectedTeacherId;
+    if (title.isEmpty || desc.isEmpty || teacherId == null) return;
 
     if (mounted) setState(() => _isAutoSaving = true);
     try {
@@ -306,18 +308,31 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
                 desktop: 36,
               ),
             ),
-            Text(
-              'All Courses',
-              style: TextStyle(
-                color: const Color(0xFF8B5E3C),
-                fontSize: ResponsiveHelper.getResponsiveFontSize(
-                  context,
-                  mobile: 20,
-                  tablet: 22,
-                  desktop: 24,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'All Courses',
+                  style: TextStyle(
+                    color: const Color(0xFF8B5E3C),
+                    fontSize: ResponsiveHelper.getResponsiveFontSize(
+                      context,
+                      mobile: 20,
+                      tablet: 22,
+                      desktop: 24,
+                    ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                fontWeight: FontWeight.bold,
-              ),
+                TextButton.icon(
+                  onPressed: () => _showDeleteAllDialog(),
+                  icon: const Icon(Icons.delete_sweep, color: Colors.red),
+                  label: const Text(
+                    'Delete All',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
             ),
             SizedBox(
               height: ResponsiveHelper.getResponsiveMargin(
@@ -418,6 +433,13 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
                             ),
                             onPressed: () => _showEditDialog(c),
                           ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                            ),
+                            onPressed: () => _showDeleteConfirmation(c),
+                          ),
                         ],
                       ),
                     );
@@ -443,6 +465,72 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
         elevation: 0,
       ),
       body: content,
+    );
+  }
+
+  void _showDeleteConfirmation(Course course) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Course'),
+        content: Text('Are you sure you want to delete "${course.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await DataService.deleteCourse(course.id);
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Course deleted')));
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteAllDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete All Courses'),
+        content: const Text(
+          'Are you sure you want to delete ALL courses? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final courses = await DataService.watchAllCourses().first;
+              for (var c in courses) {
+                await DataService.deleteCourse(c.id);
+              }
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('All courses deleted')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text(
+              'Delete All',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
