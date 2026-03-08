@@ -309,7 +309,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
       }
     }
 
-    return query.orderBy('createdAt', descending: true).snapshots();
+    return query.snapshots();
   }
 
   Widget _buildStatusBadge(bool approved, bool suspended) {
