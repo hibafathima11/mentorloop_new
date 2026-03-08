@@ -205,6 +205,20 @@ class DataService {
     });
   }
 
+  static Stream<List<Map<String, dynamic>>> watchAllVideoExitLogs() {
+    return _db
+        .collection('video_exit_logs')
+        .orderBy('exitedAt', descending: true)
+        .snapshots()
+        .map(
+          (s) => s.docs.map((d) {
+            final map = d.data();
+            map['id'] = d.id;
+            return map;
+          }).toList(),
+        );
+  }
+
   // Assignments
   static Future<String> createAssignment(Assignment a) async {
     final ref = await _db.collection('assignments').add(a.toMap());
@@ -224,6 +238,16 @@ class DataService {
   static Stream<List<Assignment>> watchAllAssignments() {
     return _db
         .collection('assignments')
+        .snapshots()
+        .map(
+          (s) => s.docs.map((d) => Assignment.fromMap(d.id, d.data())).toList(),
+        );
+  }
+
+  static Stream<List<Assignment>> watchTeacherAssignments(String teacherId) {
+    return _db
+        .collection('assignments')
+        .where('teacherId', isEqualTo: teacherId)
         .snapshots()
         .map(
           (s) => s.docs.map((d) => Assignment.fromMap(d.id, d.data())).toList(),

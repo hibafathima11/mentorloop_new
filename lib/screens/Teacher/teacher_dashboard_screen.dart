@@ -9,7 +9,7 @@ import 'package:mentorloop_new/utils/cloudinary_service.dart';
 import 'package:mentorloop_new/screens/Teacher/upload_content_screen.dart';
 import 'package:mentorloop_new/screens/Teacher/add_video_questions_screen.dart';
 import 'package:mentorloop_new/screens/Teacher/assignment_create_screen.dart';
-import 'package:mentorloop_new/screens/Teacher/assignment_review_screen.dart';
+import 'package:mentorloop_new/screens/Teacher/teacher_submissions_screen.dart';
 import 'package:mentorloop_new/screens/Common/doubts_screen.dart';
 import 'package:mentorloop_new/screens/Common/analytics_screen.dart';
 import 'package:mentorloop_new/screens/Common/login_screen.dart';
@@ -95,12 +95,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       _DashAction(
         icon: Icons.assignment_turned_in,
         title: 'Review Submissions',
-        subtitle: 'Grade student submissions',
+        subtitle: 'Assignments, Exams & Logs',
         onTap: (ctx) => Navigator.push(
           ctx,
           MaterialPageRoute(
-            builder: (_) =>
-                const AssignmentReviewScreen(assignmentId: 'ASSIGNMENT_ID'),
+            builder: (_) => const TeacherSubmissionsTabsScreen(),
           ),
         ),
       ),
