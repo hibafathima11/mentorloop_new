@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mentorloop_new/utils/email_service.dart';
 
@@ -156,20 +156,26 @@ class AuthService {
     // Send approval email notification
     if (email.isNotEmpty) {
       final displayName = name.isNotEmpty ? name : email.split('@').first;
-      await EmailService.sendEmail(
-        templateParams: {
-          'to_email': email,
-          'subject': 'Your MentorLoop Account Has Been Approved',
-          'name': displayName,
-          'time': DateTime.now().toString().split('.')[0],
-          'message':
-              'Hello ${displayName},\n\n'
-              'Your MentorLoop student account has been approved by the administrator.\n\n'
-              'You can now log in to your account using your registered email and password.\n\n'
-              'Best regards,\n'
-              'MentorLoop Team',
-        },
-      );
+      try {
+        await EmailService.sendEmail(
+          templateParams: {
+            'to_email': email,
+            'subject': 'Your MentorLoop Account Has Been Approved',
+            'name': displayName,
+            'time': DateTime.now().toString().split('.')[0],
+            'message':
+                'Hello ${displayName},\n\n'
+                'Your MentorLoop student account has been approved by the administrator.\n\n'
+                'You can now log in to your account using your registered email and password.\n\n'
+                'Best regards,\n'
+                'MentorLoop Team',
+          },
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          print('Warning: student approved but email failed to send - $e');
+        }
+      }
     }
   }
 
@@ -354,9 +360,7 @@ class AuthService {
   /// Send password reset email to user
   static Future<void> sendPasswordResetEmail(String email) async {
     try {
-      await _auth.sendPasswordResetEmail(
-        email: email.trim(),
-      );
+      await _auth.sendPasswordResetEmail(email: email.trim());
     } catch (e) {
       rethrow;
     }

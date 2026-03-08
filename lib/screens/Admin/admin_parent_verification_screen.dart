@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mentorloop_new/utils/responsive.dart';
 import 'package:mentorloop_new/utils/email_service.dart';
+import 'package:flutter/foundation.dart';
 
 class AdminParentVerificationScreen extends StatelessWidget {
   const AdminParentVerificationScreen({super.key});
@@ -15,7 +16,6 @@ class AdminParentVerificationScreen extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('parent_verifications')
             .where('status', isEqualTo: 'pending')
-           
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -177,21 +177,29 @@ class AdminParentVerificationScreen extends StatelessWidget {
       final parentData = parentDoc.data() ?? {};
       final parentName = parentData['name'] as String? ?? '';
 
-      final displayName =
-          parentName.isNotEmpty ? parentName : parentEmail.split('@').first;
-      await EmailService.sendEmail(
-        templateParams: {
-          'to_email': parentEmail,
-          'subject': 'Your MentorLoop Parent Account Has Been Approved',
-          'name': displayName,
-          'time': DateTime.now().toString().split('.')[0],
-          'message': 'Hello ${displayName},\n\n'
-              'Your MentorLoop parent account has been approved by the administrator.\n\n'
-              'You can now log in to your account using your registered email and password.\n\n'
-              'Best regards,\n'
-              'MentorLoop Team',
-        },
-      );
+      final displayName = parentName.isNotEmpty
+          ? parentName
+          : parentEmail.split('@').first;
+      try {
+        await EmailService.sendEmail(
+          templateParams: {
+            'to_email': parentEmail,
+            'subject': 'Your MentorLoop Parent Account Has Been Approved',
+            'name': displayName,
+            'time': DateTime.now().toString().split('.')[0],
+            'message':
+                'Hello ${displayName},\n\n'
+                'Your MentorLoop parent account has been approved by the administrator.\n\n'
+                'You can now log in to your account using your registered email and password.\n\n'
+                'Best regards,\n'
+                'MentorLoop Team',
+          },
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          print('Warning: parent approved but email failed to send - $e');
+        }
+      }
     }
   }
 

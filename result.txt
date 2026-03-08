@@ -1,0 +1,1 @@
+﻿Error: Exception: Email send failed: 412 - Gmail_API: Invalid grant. Please reconnect your Gmail account

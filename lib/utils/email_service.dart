@@ -36,7 +36,10 @@ class EmailService {
     try {
       final res = await http.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'origin': 'http://localhost',
+        },
         body: jsonEncode(payload),
       );
 
