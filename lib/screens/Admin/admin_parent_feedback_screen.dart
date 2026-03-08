@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 // ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mentorloop_new/utils/colors.dart';
@@ -10,17 +11,19 @@ class AdminParentFeedbackScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.secondaryBackground,
-      appBar: AppBar(
-        title: const Text(
-          'Parent Feedback',
-          style: TextStyle(
-            color: Color(0xFF8B5E3C),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: kIsWeb
+          ? null
+          : AppBar(
+              title: const Text(
+                'Parent Feedback',
+                style: TextStyle(
+                  color: Color(0xFF8B5E3C),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            ),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance
             .collection('parent_feedback')

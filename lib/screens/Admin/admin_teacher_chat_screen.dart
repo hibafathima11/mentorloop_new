@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,17 +21,19 @@ class _AdminTeacherChatScreenState extends State<AdminTeacherChatScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F3EF),
-      appBar: AppBar(
-        title: const Text(
-          'Chat with Teachers',
-          style: TextStyle(
-            color: Color(0xFF8B5E3C),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: kIsWeb
+          ? null
+          : AppBar(
+              title: const Text(
+                'Chat with Teachers',
+                style: TextStyle(
+                  color: Color(0xFF8B5E3C),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            ),
       body: StreamBuilder<List<UserProfile>>(
         stream: DataService.streamTeachers(),
         builder: (context, snapshot) {

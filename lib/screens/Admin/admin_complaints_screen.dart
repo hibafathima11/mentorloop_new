@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 // ignore_for_file: uri_does_not_exist, undefined_class, undefined_identifier
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -19,17 +20,19 @@ class AdminComplaintsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.secondaryBackground,
-      appBar: AppBar(
-        title: const Text(
-          'Student Complaints',
-          style: TextStyle(
-            color: Color(0xFF8B5E3C),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: kIsWeb
+          ? null
+          : AppBar(
+              title: const Text(
+                'Student Complaints',
+                style: TextStyle(
+                  color: Color(0xFF8B5E3C),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('complaints')
@@ -53,9 +56,11 @@ class AdminComplaintsScreen extends StatelessWidget {
             itemCount: complaints.length,
             itemBuilder: (context, index) {
               final doc = complaints[index];
-              final data = (doc.data() as Map<String, dynamic>?) ?? <String, dynamic>{};
+              final data =
+                  (doc.data() as Map<String, dynamic>?) ?? <String, dynamic>{};
               final createdAt = data['createdAt'];
-              final hasReply = data['reply'] != null &&
+              final hasReply =
+                  data['reply'] != null &&
                   (data['reply'] as String?).toString().trim().isNotEmpty;
 
               return Card(
@@ -68,9 +73,7 @@ class AdminComplaintsScreen extends StatelessWidget {
                   onTap: () => _openComplaintDetail(context, doc.id, data),
                   leading: Icon(
                     hasReply ? Icons.check_circle : Icons.report_problem,
-                    color: hasReply
-                        ? Colors.green
-                        : const Color(0xFFD32F2F),
+                    color: hasReply ? Colors.green : const Color(0xFFD32F2F),
                   ),
                   title: Text(
                     data['complaint'] ?? '',
@@ -85,18 +88,12 @@ class AdminComplaintsScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         'Student Email: ${data['studentEmail'] ?? '-'}',
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Colors.grey[700], fontSize: 13),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Date: ${_formatDate(createdAt)}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
                       ),
                       if (hasReply) ...[
                         const SizedBox(height: 4),
@@ -158,9 +155,7 @@ class _ComplaintDetailSheet extends StatefulWidget {
 }
 
 class _ComplaintDetailSheetState extends State<_ComplaintDetailSheet> {
-  final _replyController = TextEditingController(
-    text: null,
-  );
+  final _replyController = TextEditingController(text: null);
   bool _isSending = false;
 
   @override
@@ -195,21 +190,18 @@ class _ComplaintDetailSheetState extends State<_ComplaintDetailSheet> {
       await FirebaseFirestore.instance
           .collection('complaints')
           .doc(widget.complaintId)
-          .update({
-        'reply': reply,
-        'repliedAt': FieldValue.serverTimestamp(),
-      });
+          .update({'reply': reply, 'repliedAt': FieldValue.serverTimestamp()});
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reply sent')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Reply sent')));
         widget.onReplySent();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send reply: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to send reply: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -219,7 +211,8 @@ class _ComplaintDetailSheetState extends State<_ComplaintDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final data = widget.data;
-    final hasReply = data['reply'] != null &&
+    final hasReply =
+        data['reply'] != null &&
         (data['reply'] as String?).toString().trim().isNotEmpty;
 
     return Container(
@@ -268,29 +261,20 @@ class _ComplaintDetailSheetState extends State<_ComplaintDetailSheet> {
                     ),
                     child: Text(
                       data['complaint'] ?? '-',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.4,
-                      ),
+                      style: const TextStyle(fontSize: 15, height: 1.4),
                     ),
                   ),
                   const SizedBox(height: 16),
                   _label('Student Email'),
                   Text(
                     data['studentEmail'] ?? '-',
-                    style: TextStyle(
-                      color: Colors.grey[800],
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(color: Colors.grey[800], fontSize: 15),
                   ),
                   const SizedBox(height: 12),
                   _label('Date'),
                   Text(
                     _formatDate(data['createdAt']),
-                    style: TextStyle(
-                      color: Colors.grey[800],
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(color: Colors.grey[800], fontSize: 15),
                   ),
                   const SizedBox(height: 24),
                   const Divider(height: 1),
@@ -314,19 +298,13 @@ class _ComplaintDetailSheetState extends State<_ComplaintDetailSheet> {
                       ),
                       child: Text(
                         (data['reply'] as String?) ?? '',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          height: 1.4,
-                        ),
+                        style: const TextStyle(fontSize: 15, height: 1.4),
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Replied at: ${_formatDate(data['repliedAt'])}',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
                     ),
                     const SizedBox(height: 20),
                   ],

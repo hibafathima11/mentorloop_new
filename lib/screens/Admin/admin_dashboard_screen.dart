@@ -12,6 +12,10 @@ import 'package:mentorloop_new/screens/Admin/admin_user_analytics_screen.dart';
 import 'package:mentorloop_new/screens/Admin/admin_teacher_chat_screen.dart';
 import 'package:mentorloop_new/screens/Admin/admin_complaints_screen.dart';
 import 'package:mentorloop_new/screens/Admin/admin_parent_feedback_screen.dart';
+import 'package:mentorloop_new/web/screens/assignments_management_screen.dart';
+import 'package:mentorloop_new/web/screens/exams_management_screen.dart';
+import 'package:mentorloop_new/web/screens/courses_management_screen.dart';
+import 'package:mentorloop_new/web/screens/users_management_screen.dart';
 
 import 'package:mentorloop_new/web/screens/notificationscreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -529,6 +533,58 @@ Widget _buildActionsGrid(BuildContext context, int crossAxisCount) {
           context,
           MaterialPageRoute(
             builder: (context) => const AdminTeacherChatScreen(),
+          ),
+        );
+      },
+    },
+    {
+      'icon': Icons.assignment_outlined,
+      'title': 'Assignments',
+      'subtitle': 'Review and oversee student assignments',
+      'onTap': () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AssignmentsManagementScreen(),
+          ),
+        );
+      },
+    },
+    {
+      'icon': Icons.description_outlined,
+      'title': 'Exams',
+      'subtitle': 'Manage and track student exams',
+      'onTap': () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ExamsManagementScreen(),
+          ),
+        );
+      },
+    },
+    {
+      'icon': Icons.school_outlined,
+      'title': 'Courses',
+      'subtitle': 'Oversee all available courses',
+      'onTap': () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const CoursesManagementScreen(),
+          ),
+        );
+      },
+    },
+    {
+      'icon': Icons.person_search_outlined,
+      'title': 'Users Management',
+      'subtitle': 'Manage all types of users',
+      'onTap': () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const UsersManagementScreen(),
           ),
         );
       },
