@@ -309,6 +309,9 @@ class AuthService {
           emailError.contains('503')) {
         emailError =
             'EmailJS service temporarily unavailable. Please try again later.';
+      } else if (emailError.contains('412')) {
+        emailError =
+            'Gmail_API: Invalid grant. This usually means the Gmail connection in EmailJS needs to be reconnected OR your Google Cloud project is in "Testing" instead of "Production".';
       }
 
       // Error logged in emailError variable for handling

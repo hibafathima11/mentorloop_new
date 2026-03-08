@@ -5,7 +5,7 @@ class EmailService {
   EmailService._();
 
   // TODO: Configure your EmailJS details
-  static const String emailJsServiceId = 'service_gwxddnn';
+  static const String emailJsServiceId = 'service_a7c4rop';
   static const String emailJsTemplateId = 'template_sc4t9ef';
   static const String emailJsPublicKey = '7hMyWbrQuAyzrge0n';
 
