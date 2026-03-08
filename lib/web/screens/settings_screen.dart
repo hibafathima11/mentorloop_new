@@ -17,10 +17,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
-  
+
   final _debouncer = Debouncer(milliseconds: 500);
   bool _isAutoSaving = false;
-  
+
   bool _isLoading = false;
   bool _notificationsEnabled = true;
   String _userRole = '';
@@ -77,11 +77,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _debouncer.dispose();
     super.dispose();
   }
-  
+
   void _onFieldChanged() {
-     _debouncer.run(() {
-        _updateProfile(silent: true);
-     });
+    _debouncer.run(() {
+      _updateProfile(silent: true);
+    });
   }
 
   @override
@@ -98,9 +98,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: EdgeInsets.only(bottom: 8.0),
               child: Row(
                 children: [
-                   SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2)),
-                   SizedBox(width: 8),
-                   Text('Auto-saving...', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Auto-saving...',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 ],
               ),
             ),
@@ -130,11 +137,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Icon(
-            Icons.settings,
-            color: Colors.white,
-            size: 32,
-          ),
+          child: const Icon(Icons.settings, color: Colors.white, size: 32),
         ),
         const SizedBox(width: 16),
         Text(
@@ -164,6 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             controller: _nameController,
             label: 'Full Name',
             icon: Icons.person_outline,
+            textInputAction: TextInputAction.next,
             onChanged: (_) => _onFieldChanged(),
           ),
           const SizedBox(height: 16),
@@ -172,12 +176,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             label: 'Email Address',
             icon: Icons.email_outlined,
             enabled: false, // Email should not be editable
+            textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: 16),
           _buildTextField(
             controller: _phoneController,
             label: 'Phone Number',
             icon: Icons.phone_outlined,
+            textInputAction: TextInputAction.next,
             onChanged: (_) => _onFieldChanged(),
           ),
           const SizedBox(height: 16),
@@ -186,6 +192,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             label: 'Bio',
             icon: Icons.info_outline,
             maxLines: 3,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _updateProfile(),
             onChanged: (_) => _onFieldChanged(),
           ),
           const SizedBox(height: 20),
@@ -360,11 +368,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Row(
               children: [
-                Icon(
-                  icon,
-                  color: const Color(0xFF8B5E3C),
-                  size: 24,
-                ),
+                Icon(icon, color: const Color(0xFF8B5E3C), size: 24),
                 const SizedBox(width: 12),
                 Text(
                   title,
@@ -395,19 +399,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     bool enabled = true,
     int maxLines = 1,
+    TextInputAction? textInputAction,
+    ValueChanged<String>? onFieldSubmitted,
     ValueChanged<String>? onChanged,
   }) {
     return TextFormField(
       controller: controller,
       enabled: enabled,
       maxLines: maxLines,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Colors.grey[300]!),
@@ -470,16 +476,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (_userId.isEmpty) return;
 
     if (silent) {
-       setState(() => _isAutoSaving = true);
+      setState(() => _isAutoSaving = true);
     } else {
-       setState(() => _isLoading = true);
+      setState(() => _isLoading = true);
     }
 
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_userId)
-          .update({
+      await FirebaseFirestore.instance.collection('users').doc(_userId).update({
         'name': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
         'bio': _bioController.text.trim(),
@@ -494,9 +497,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } catch (e) {
       if (mounted && !silent) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating profile: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error updating profile: $e')));
       }
     } finally {
       if (mounted) {
@@ -550,7 +553,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Password change functionality coming soon')),
+                const SnackBar(
+                  content: Text('Password change functionality coming soon'),
+                ),
               );
             },
             child: const Text('Update Password'),
@@ -563,11 +568,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showAboutDialog() {
     showAboutDialog(
       context: context,
-      applicationName: 'MentorLoop',
+      applicationName: 'Mentorloop',
       applicationVersion: '1.0.0',
-      applicationIcon: const Icon(Icons.school, size: 48, color: Color(0xFF8B5E3C)),
+      applicationIcon: const Icon(
+        Icons.school,
+        size: 48,
+        color: Color(0xFF8B5E3C),
+      ),
       children: const [
-        Text('A comprehensive learning management system for students, teachers, and parents.'),
+        Text(
+          'A comprehensive learning management system for students, teachers, and parents.',
+        ),
         SizedBox(height: 16),
         Text('Features:'),
         Text('• Course management'),
@@ -627,7 +638,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (confirm == true) {
       // Implement account deletion logic
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account deletion functionality coming soon')),
+        const SnackBar(
+          content: Text('Account deletion functionality coming soon'),
+        ),
       );
     }
   }

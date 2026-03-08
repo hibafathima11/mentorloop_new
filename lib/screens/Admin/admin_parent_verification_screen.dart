@@ -188,15 +188,15 @@ class AdminParentVerificationScreen extends StatelessWidget {
         await EmailService.sendEmail(
           templateParams: {
             'to_email': parentEmail,
-            'subject': 'Your MentorLoop Parent Account Has Been Approved',
+            'subject': 'Your Mentorloop Parent Account Has Been Approved',
             'name': displayName,
             'time': DateTime.now().toString().split('.')[0],
             'message':
                 'Hello ${displayName},\n\n'
-                'Your MentorLoop parent account has been approved by the administrator.\n\n'
+                'Your Mentorloop parent account has been approved by the administrator.\n\n'
                 'You can now log in to your account using your registered email and password.\n\n'
                 'Best regards,\n'
-                'MentorLoop Team',
+                'Mentorloop Team',
           },
         );
       } catch (e) {

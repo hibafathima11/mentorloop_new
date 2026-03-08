@@ -216,7 +216,7 @@ class _SplashScreenState extends State<SplashScreen>
                     FadeTransition(
                       opacity: _fadeIn,
                       child: Text(
-                        "MentorLoop",
+                        "Mentorloop",
                         style: TextStyle(
                           color: const Color(0xFF8B5E3C),
                           fontSize: ResponsiveHelper.getResponsiveFontSize(

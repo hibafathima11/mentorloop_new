@@ -58,6 +58,8 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
       child: TextField(
         controller: _searchController,
         onChanged: (value) => setState(() => _searchQuery = value),
+        onSubmitted: (value) => setState(() => _searchQuery = value),
+        textInputAction: TextInputAction.search,
         style: const TextStyle(color: Colors.black),
         decoration: const InputDecoration(
           hintText: 'Search users...',

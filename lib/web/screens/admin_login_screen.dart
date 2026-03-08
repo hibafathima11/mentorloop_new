@@ -206,6 +206,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         TextField(
                           controller: _emailController,
                           enabled: !_isLoading,
+                          textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
                             hintText: 'admin@mentorloop.com',
                             prefixIcon: const Icon(Icons.email_outlined),
@@ -233,6 +234,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           controller: _passwordController,
                           enabled: !_isLoading,
                           obscureText: true,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _login(),
                           decoration: InputDecoration(
                             hintText: '••••••••',
                             prefixIcon: const Icon(Icons.lock_outlined),
@@ -314,7 +317,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
                   // Footer Text
                   const Text(
-                    '© 2024 MentorLoop Admin. All rights reserved.',
+                    '© 2024 Mentorloop Admin. All rights reserved.',
                     style: TextStyle(fontSize: 12, color: Colors.white60),
                   ),
                 ],

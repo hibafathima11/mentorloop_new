@@ -34,9 +34,10 @@ class _LandingPageState extends State<LandingPage>
       vsync: this,
     )..repeat(reverse: true);
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeIn));
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
@@ -74,8 +75,12 @@ class _LandingPageState extends State<LandingPage>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFF8B5E3C).withValues(alpha: 0.03 + _pulseController.value * 0.02),
-                      const Color(0xFF6B4423).withValues(alpha: 0.02 + _pulseController.value * 0.01),
+                      const Color(
+                        0xFF8B5E3C,
+                      ).withValues(alpha: 0.03 + _pulseController.value * 0.02),
+                      const Color(
+                        0xFF6B4423,
+                      ).withValues(alpha: 0.02 + _pulseController.value * 0.01),
                       Colors.white,
                     ],
                   ),
@@ -151,8 +156,10 @@ class _LandingPageState extends State<LandingPage>
                   child: Row(
                     children: [
                       Container(
-                        width: ResponsiveHelper.getResponsiveIconSize(context) + 4,
-                        height: ResponsiveHelper.getResponsiveIconSize(context) + 4,
+                        width:
+                            ResponsiveHelper.getResponsiveIconSize(context) + 4,
+                        height:
+                            ResponsiveHelper.getResponsiveIconSize(context) + 4,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Color(0xFF8B5E3C), Color(0xFF6B4423)],
@@ -162,7 +169,9 @@ class _LandingPageState extends State<LandingPage>
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF8B5E3C).withValues(alpha: 0.4),
+                              color: const Color(
+                                0xFF8B5E3C,
+                              ).withValues(alpha: 0.4),
                               blurRadius: 12,
                               offset: const Offset(0, 6),
                             ),
@@ -189,7 +198,7 @@ class _LandingPageState extends State<LandingPage>
                       ),
                       if (!isMobile)
                         Text(
-                          'MentorLoop',
+                          'Mentorloop',
                           style: TextStyle(
                             color: const Color(0xFF8B5E3C),
                             fontWeight: FontWeight.bold,
@@ -239,7 +248,9 @@ class _LandingPageState extends State<LandingPage>
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF8B5E3C).withValues(alpha: 0.3),
+                            color: const Color(
+                              0xFF8B5E3C,
+                            ).withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -271,8 +282,9 @@ class _LandingPageState extends State<LandingPage>
                         child: Text(
                           'Admin Login',
                           style: TextStyle(
-                            fontSize:
-                                ResponsiveHelper.getResponsiveFontSize(context),
+                            fontSize: ResponsiveHelper.getResponsiveFontSize(
+                              context,
+                            ),
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
@@ -289,7 +301,10 @@ class _LandingPageState extends State<LandingPage>
                 label: const Text('Admin'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8B5E3C),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                 ),
               ),
           ],
@@ -394,7 +409,9 @@ class _LandingPageState extends State<LandingPage>
                           color: const Color(0xFF8B5E3C).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(30),
                           border: Border.all(
-                            color: const Color(0xFF8B5E3C).withValues(alpha: 0.2),
+                            color: const Color(
+                              0xFF8B5E3C,
+                            ).withValues(alpha: 0.2),
                             width: 1,
                           ),
                         ),
@@ -618,7 +635,11 @@ class _LandingPageState extends State<LandingPage>
     }
   }
 
-  Widget _buildStatsSection(BuildContext context, bool isMobile, bool isTablet) {
+  Widget _buildStatsSection(
+    BuildContext context,
+    bool isMobile,
+    bool isTablet,
+  ) {
     final stats = <Map<String, dynamic>>[
       {'value': '10K+', 'label': 'Active Students', 'icon': Icons.people},
       {'value': '500+', 'label': 'Teachers', 'icon': Icons.school},
@@ -638,17 +659,19 @@ class _LandingPageState extends State<LandingPage>
           if (ResponsiveHelper.isMobile(context)) {
             return Column(
               children: stats
-                  .map((stat) => Padding(
-                        padding: EdgeInsets.only(
-                          bottom: ResponsiveHelper.getResponsiveSpacing(context),
-                        ),
-                        child: _statCard(
-                          stat['value'] as String,
-                          stat['label'] as String,
-                          stat['icon'] as IconData,
-                          context,
-                        ),
-                      ))
+                  .map(
+                    (stat) => Padding(
+                      padding: EdgeInsets.only(
+                        bottom: ResponsiveHelper.getResponsiveSpacing(context),
+                      ),
+                      child: _statCard(
+                        stat['value'] as String,
+                        stat['label'] as String,
+                        stat['icon'] as IconData,
+                        context,
+                      ),
+                    ),
+                  )
                   .toList(),
             );
           } else if (ResponsiveHelper.isTablet(context)) {
@@ -673,17 +696,19 @@ class _LandingPageState extends State<LandingPage>
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: stats
-                  .map((stat) => Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: _statCard(
-                            stat['value'] as String,
-                            stat['label'] as String,
-                            stat['icon'] as IconData,
-                            context,
-                          ),
+                  .map(
+                    (stat) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: _statCard(
+                          stat['value'] as String,
+                          stat['label'] as String,
+                          stat['icon'] as IconData,
+                          context,
                         ),
-                      ))
+                      ),
+                    ),
+                  )
                   .toList(),
             );
           }
@@ -727,11 +752,7 @@ class _LandingPageState extends State<LandingPage>
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: const Color(0xFF8B5E3C),
-                size: 32,
-              ),
+              child: Icon(icon, color: const Color(0xFF8B5E3C), size: 32),
             ),
             SizedBox(
               height: ResponsiveHelper.getResponsiveSpacing(
@@ -910,10 +931,7 @@ class _LandingPageState extends State<LandingPage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: Colors.grey[200]!,
-            width: 1,
-          ),
+          border: Border.all(color: Colors.grey[200]!, width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
@@ -939,11 +957,7 @@ class _LandingPageState extends State<LandingPage>
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 32,
-              ),
+              child: Icon(icon, color: color, size: 32),
             ),
             const SizedBox(height: 20),
             Text(
@@ -1014,7 +1028,7 @@ class _LandingPageState extends State<LandingPage>
           ),
           const SizedBox(height: 16),
           Text(
-            'Join thousands of educators and learners using MentorLoop',
+            'Join thousands of educators and learners using Mentorloop',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.95),
@@ -1074,12 +1088,7 @@ class _LandingPageState extends State<LandingPage>
       ),
       decoration: BoxDecoration(
         color: Colors.grey[50],
-        border: Border(
-          top: BorderSide(
-            color: Colors.grey[200]!,
-            width: 1,
-          ),
-        ),
+        border: Border(top: BorderSide(color: Colors.grey[200]!, width: 1)),
       ),
       child: Column(
         children: [
@@ -1111,7 +1120,7 @@ class _LandingPageState extends State<LandingPage>
                     ),
                     const SizedBox(width: 12),
                     const Text(
-                      '© 2025 MentorLoop. All rights reserved.',
+                      '© 2025 Mentorloop. All rights reserved.',
                       style: TextStyle(color: Colors.grey, fontSize: 14),
                     ),
                   ],
@@ -1158,7 +1167,7 @@ class _LandingPageState extends State<LandingPage>
                 _footerLink('Contact'),
                 const SizedBox(height: 24),
                 const Text(
-                  '© 2025 MentorLoop. All rights reserved.',
+                  '© 2025 Mentorloop. All rights reserved.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey, fontSize: 14),
                 ),
@@ -1191,10 +1200,8 @@ class _LandingPageState extends State<LandingPage>
   }
 
   void _navigateToAdminLogin(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const AdminLoginScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const AdminLoginScreen()));
   }
 }

@@ -1,6 +1,6 @@
 {
-    "name": "mentorloop_new",
-    "short_name": "mentorloop_new",
+    "name": "Mentorloop",
+    "short_name": "Mentorloop",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -117,6 +117,8 @@ class _CoursesManagementScreenState extends State<CoursesManagementScreen> {
                 child: TextField(
                   controller: _searchController,
                   onChanged: (_) => setState(() {}),
+                  onSubmitted: (_) => setState(() {}),
+                  textInputAction: TextInputAction.search,
                   decoration: InputDecoration(
                     hintText: 'Search courses...',
                     prefixIcon: const Icon(Icons.search),

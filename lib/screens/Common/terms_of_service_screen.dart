@@ -52,12 +52,12 @@ class TermsOfServiceScreen extends StatelessWidget {
               _buildSection(
                 context,
                 'Acceptance of Terms',
-                'By accessing and using MentorLoop, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.',
+                'By accessing and using Mentorloop, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.',
               ),
               _buildSection(
                 context,
                 'Use License',
-                'Permission is granted to temporarily download one copy of MentorLoop for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not modify or copy the materials.',
+                'Permission is granted to temporarily download one copy of Mentorloop for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not modify or copy the materials.',
               ),
               _buildSection(
                 context,

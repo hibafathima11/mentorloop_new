@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
     );
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'MentorLoop',
+      title: 'Mentorloop',
       theme: base.copyWith(
         splashFactory: InkRipple.splashFactory,
         scaffoldBackgroundColor: const Color(0xFFF5EDE3),

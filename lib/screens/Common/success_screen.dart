@@ -93,7 +93,7 @@ class SuccessScreen extends StatelessWidget {
                 ),
                 // Success message
                 Text(
-                  "Your account has been successfully created. Welcome to MentorLoop!",
+                  "Your account has been successfully created. Welcome to Mentorloop!",
                   style: TextStyle(
                     color: const Color.fromARGB(
                       255,

@@ -33,10 +33,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
           'createdAt': FieldValue.serverTimestamp(),
         });
       } else {
-        await _db
-            .collection('admin_notifications')
-            .doc(_editingId)
-            .update({
+        await _db.collection('admin_notifications').doc(_editingId).update({
           'title': _titleController.text.trim(),
           'message': _messageController.text.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
@@ -95,6 +92,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                   children: [
                     TextFormField(
                       controller: _titleController,
+                      textInputAction: TextInputAction.next,
                       decoration: const InputDecoration(
                         labelText: 'Title',
                         border: OutlineInputBorder(),
@@ -106,6 +104,8 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                     TextFormField(
                       controller: _messageController,
                       maxLines: 4,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _submitNotification(),
                       decoration: const InputDecoration(
                         labelText: 'Message',
                         border: OutlineInputBorder(),
@@ -121,7 +121,9 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF8B5E3C),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                         ),
                         child: Text(
                           _editingId == null ? 'Send' : 'Update',
@@ -156,9 +158,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                 }
 
                 if (snapshot.data!.docs.isEmpty) {
-                  return const Center(
-                    child: Text('No notifications sent yet'),
-                  );
+                  return const Center(child: Text('No notifications sent yet'));
                 }
 
                 return ListView.builder(
@@ -176,8 +176,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                       child: ListTile(
                         title: Text(
                           data['title'],
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,9 +186,9 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                             const SizedBox(height: 6),
                             if (data['createdAt'] != null)
                               Text(
-                                DateFormat('dd MMM yyyy, hh:mm a').format(
-                                  data['createdAt'].toDate(),
-                                ),
+                                DateFormat(
+                                  'dd MMM yyyy, hh:mm a',
+                                ).format(data['createdAt'].toDate()),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],
@@ -205,10 +204,12 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                               onPressed: () => _editNotification(doc),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete,
-                                  color: Colors.red, size: 20),
-                              onPressed: () =>
-                                  _deleteNotification(doc.id),
+                              icon: const Icon(
+                                Icons.delete,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                              onPressed: () => _deleteNotification(doc.id),
                             ),
                           ],
                         ),

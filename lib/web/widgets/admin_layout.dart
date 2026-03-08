@@ -95,7 +95,7 @@ class _AdminLayoutState extends State<AdminLayout> {
                 if (_sidebarExpanded) ...[
                   const SizedBox(width: 12),
                   const Text(
-                    'MentorLoop',
+                    'Mentorloop',
                     style: TextStyle(
                       color: Color(0xFF8B5E3C),
                       fontWeight: FontWeight.bold,
@@ -245,6 +245,11 @@ class _AdminLayoutState extends State<AdminLayout> {
             }
             if (index != null && widget.onNavItemSelected != null) {
               widget.onNavItemSelected!(index);
+              // Close sidebar on mobile after selection
+              final isMobile = MediaQuery.of(context).size.width < 768;
+              if (isMobile) {
+                setState(() => _sidebarExpanded = false);
+              }
             }
           },
           borderRadius: BorderRadius.circular(8),
@@ -291,57 +296,198 @@ class _AdminLayoutState extends State<AdminLayout> {
         border: Border(bottom: BorderSide(color: Colors.grey[200]!, width: 1)),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            if (isMobile)
+              IconButton(
+                icon: Icon(_sidebarExpanded ? Icons.menu_open : Icons.menu),
+                onPressed: () =>
+                    setState(() => _sidebarExpanded = !_sidebarExpanded),
+                color: const Color(0xFF8B5E3C),
+              ),
+            const SizedBox(width: 8),
             // Title
-            Text(
-              widget.title,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+            Expanded(
+              child: Text(
+                widget.title,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
             // Right Actions
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: () {},
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () => _showSearchDialog(context),
+                  tooltip: 'Search',
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: IconButton(
-                    icon: const Icon(Icons.notifications),
-                    onPressed: () {},
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.notifications_none),
+                  onPressed: () => _showNotificationsDialog(context),
+                  tooltip: 'Notifications',
                 ),
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B5E3C),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'A',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                const SizedBox(width: 8),
+                PopupMenuButton(
+                  offset: const Offset(0, 50),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B5E3C),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF8B5E3C).withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'A',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      child: Row(
+                        children: [
+                          Icon(Icons.person_outline, size: 20),
+                          SizedBox(width: 10),
+                          Text('Profile'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      onTap: () async {
+                        await FirebaseAuth.instance.signOut();
+                        if (!mounted) return;
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (_) => const LandingPage(),
+                          ),
+                          (route) => false,
+                        );
+                      },
+                      child: const Row(
+                        children: [
+                          Icon(Icons.logout, size: 20, color: Colors.red),
+                          SizedBox(width: 10),
+                          Text('Logout', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showSearchDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Search'),
+        content: TextField(
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Search for students, teachers, or courses...',
+            prefixIcon: const Icon(Icons.search),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          onSubmitted: (value) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Searching for: $value')));
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Search'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNotificationsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.notifications, color: Color(0xFF8B5E3C)),
+            const SizedBox(width: 12),
+            const Text('Notifications'),
+          ],
+        ),
+        content: SizedBox(
+          width: 350,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _notificationItem(
+                'New Student Signup',
+                'A new student has registered and is pending approval.',
+                '2 mins ago',
+              ),
+              const Divider(),
+              _notificationItem(
+                'Course Updated',
+                'Computer Science course content has been updated by the teacher.',
+                '1 hour ago',
+              ),
+              const Divider(),
+              _notificationItem(
+                'New Complaint',
+                'A new parent complaint has been submitted.',
+                '3 hours ago',
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _notificationItem(String title, String subtitle, String time) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      ),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+      trailing: Text(
+        time,
+        style: const TextStyle(fontSize: 10, color: Colors.grey),
       ),
     );
   }

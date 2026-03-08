@@ -160,6 +160,7 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
                           label: 'Title',
                           validator: _required,
                           onChanged: (_) => _onFieldChanged(),
+                          textInputAction: TextInputAction.next,
                         ),
                         SizedBox(
                           height: ResponsiveHelper.getResponsiveMargin(
@@ -176,6 +177,8 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
                           maxLines: 3,
                           validator: _required,
                           onChanged: (_) => _onFieldChanged(),
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: () => _createCourse(),
                         ),
                         SizedBox(
                           height: ResponsiveHelper.getResponsiveMargin(
@@ -562,12 +565,18 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
     int maxLines = 1,
     String? Function(String?)? validator,
     ValueChanged<String>? onChanged,
+    TextInputAction? textInputAction,
+    VoidCallback? onFieldSubmitted,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       validator: validator,
       onChanged: onChanged,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted != null
+          ? (_) => onFieldSubmitted()
+          : null,
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(
