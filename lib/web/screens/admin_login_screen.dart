@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:mentorloop_new/web/screens/admin_main_screen.dart';
 import 'package:mentorloop_new/screens/Admin/admin_dashboard_screen.dart';
-
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -36,7 +37,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const AdminDashboardScreen(),
+          builder: (context) =>
+              kIsWeb ? const AdminMainScreen() : const AdminDashboardScreen(),
         ),
       );
       if (mounted) setState(() => _isLoading = false);
@@ -44,17 +46,18 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     }
 
     try {
-      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      final userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
 
       // Check role
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
           .get();
-      
+
       final role = (userDoc.data()?['role'] as String?)?.toLowerCase();
       if (role != 'admin') {
         await FirebaseAuth.instance.signOut();
@@ -64,13 +67,18 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const AdminDashboardScreen(),
+          builder: (context) =>
+              kIsWeb ? const AdminMainScreen() : const AdminDashboardScreen(),
         ),
       );
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message ?? 'Login failed');
     } catch (e) {
-      setState(() => _error = e.toString().contains('Exception:') ? e.toString().split('Exception: ')[1] : e.toString());
+      setState(
+        () => _error = e.toString().contains('Exception:')
+            ? e.toString().split('Exception: ')[1]
+            : e.toString(),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -94,10 +102,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF8B5E3C),
-              Color(0xFF6B4423),
-            ],
+            colors: [Color(0xFF8B5E3C), Color(0xFF6B4423)],
           ),
         ),
         child: Center(
@@ -133,10 +138,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   const SizedBox(height: 12),
                   const Text(
                     'Login to manage your platform',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.white70),
                   ),
                   const SizedBox(height: 48),
 
@@ -252,8 +254,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                             onPressed: _isLoading ? null : _login,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF8B5E3C),
-                              disabledBackgroundColor:
-                                  const Color(0xFF8B5E3C).withOpacity(0.5),
+                              disabledBackgroundColor: const Color(
+                                0xFF8B5E3C,
+                              ).withOpacity(0.5),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -263,8 +266,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
                                         Colors.white,
                                       ),
                                       strokeWidth: 2,
@@ -288,8 +290,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                             onPressed: _isLoading
                                 ? null
                                 : () {
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(
+                                    ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text(
                                           'Password reset feature coming soon',
@@ -314,10 +315,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   // Footer Text
                   const Text(
                     '© 2024 MentorLoop Admin. All rights reserved.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white60,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.white60),
                   ),
                 ],
               ),

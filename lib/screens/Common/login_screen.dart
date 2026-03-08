@@ -3,7 +3,7 @@ import 'package:mentorloop_new/screens/Common/signup_screen.dart';
 import 'package:mentorloop_new/screens/Student/home_screen.dart';
 import 'package:mentorloop_new/screens/Teacher/teacher_dashboard_screen.dart';
 import 'package:mentorloop_new/screens/Admin/admin_dashboard_screen.dart';
-import 'package:mentorloop_new/web/screens/admin_dashboard_screen.dart' as web_admin;
+import 'package:mentorloop_new/web/screens/admin_main_screen.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mentorloop_new/screens/Parent/parent_dashboard_screen.dart';
 import 'package:mentorloop_new/screens/common/forgot_password_screen.dart';
@@ -71,11 +71,10 @@ class _LoginScreenState extends State<LoginScreen>
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Admin login successful')));
-        final Widget destination = const web_admin.AdminDashboardScreen();
-        Navigator.of(context).pushReplacementSlide(
-          destination,
-          direction: SlideDirection.left,
-        );
+        final Widget destination = const AdminMainScreen();
+        Navigator.of(
+          context,
+        ).pushReplacementSlide(destination, direction: SlideDirection.left);
         return;
       }
 
@@ -138,7 +137,9 @@ class _LoginScreenState extends State<LoginScreen>
           destination = const ParentDashboardScreen();
           break;
         case 'admin':
-          destination = kIsWeb ? const web_admin.AdminDashboardScreen() : const AdminDashboardScreen();
+          destination = kIsWeb
+              ? const AdminMainScreen()
+              : const AdminDashboardScreen();
           break;
         default:
           throw Exception('Invalid user role');
@@ -150,10 +151,7 @@ class _LoginScreenState extends State<LoginScreen>
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('$e'), backgroundColor: Colors.red),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -164,7 +162,8 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isGoogleLoading = true);
     try {
       final profile = await AuthService.signInWithGoogleAndEnsureProfile();
-      final String role = ((profile['role'] as String?) ?? 'student').toLowerCase();
+      final String role = ((profile['role'] as String?) ?? 'student')
+          .toLowerCase();
       final bool approved = (profile['approved'] as bool?) ?? false;
 
       // Platform Access Control
@@ -206,7 +205,9 @@ class _LoginScreenState extends State<LoginScreen>
           destination = const ParentDashboardScreen();
           break;
         case 'admin':
-          destination = kIsWeb ? const web_admin.AdminDashboardScreen() : const AdminDashboardScreen();
+          destination = kIsWeb
+              ? const AdminMainScreen()
+              : const AdminDashboardScreen();
           break;
         default:
           destination = const StudentHomeScreen();
@@ -220,10 +221,7 @@ class _LoginScreenState extends State<LoginScreen>
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('$e'), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);

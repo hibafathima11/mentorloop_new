@@ -10,123 +10,127 @@ class AdminParentVerificationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Parent Verification')),
-      body: StreamBuilder(
-        stream: FirebaseFirestore.instance
-            .collection('parent_verifications')
-            .where('status', isEqualTo: 'pending')
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          final dynamic qs = snapshot.data;
-          final List docs = qs?.docs ?? const [];
-          if (docs.isEmpty) {
-            return const Center(child: Text('No pending parent verifications'));
-          }
-          return ListView.separated(
-            padding: ResponsiveHelper.getResponsivePaddingAll(context),
-            itemCount: docs.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, i) {
-              final dynamic d = docs[i];
-              final Map<String, dynamic> data =
-                  (d.data() as Map<String, dynamic>?) ?? <String, dynamic>{};
-              final parentEmail = data['parentEmail'] as String? ?? '';
-              final studentEmail = data['studentEmail'] as String? ?? '';
-              final idUrl = data['idUrl'] as String? ?? '';
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Parent: $parentEmail'),
-                      Text('Student email: $studentEmail'),
-                      const SizedBox(height: 8),
-                      if (idUrl.isNotEmpty)
-                        InkWell(
-                          onTap: () {},
-                          child: const Text(
-                            'View ID',
-                            style: TextStyle(
-                              color: Colors.blue,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        )
-                      else
-                        const Text(
-                          'Auto-linked via email (No ID provided)',
+    Widget content = StreamBuilder(
+      stream: FirebaseFirestore.instance
+          .collection('parent_verifications')
+          .where('status', isEqualTo: 'pending')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        final dynamic qs = snapshot.data;
+        final List docs = qs?.docs ?? const [];
+        if (docs.isEmpty) {
+          return const Center(child: Text('No pending parent verifications'));
+        }
+        return ListView.separated(
+          padding: ResponsiveHelper.getResponsivePaddingAll(context),
+          itemCount: docs.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, i) {
+            final dynamic d = docs[i];
+            final Map<String, dynamic> data =
+                (d.data() as Map<String, dynamic>?) ?? <String, dynamic>{};
+            final parentEmail = data['parentEmail'] as String? ?? '';
+            final studentEmail = data['studentEmail'] as String? ?? '';
+            final idUrl = data['idUrl'] as String? ?? '';
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Parent: $parentEmail'),
+                    Text('Student email: $studentEmail'),
+                    const SizedBox(height: 8),
+                    if (idUrl.isNotEmpty)
+                      InkWell(
+                        onTap: () {},
+                        child: const Text(
+                          'View ID',
                           style: TextStyle(
-                            color: Colors.grey,
-                            fontStyle: FontStyle.italic,
-                            fontSize: 12,
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
                           ),
                         ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              try {
-                                await _approveParentRequest(d.id, data);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Parent approved successfully!\n✅ Email notification sent.',
-                                      ),
-                                      backgroundColor: Colors.green,
-                                      duration: Duration(seconds: 4),
-                                    ),
-                                  );
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error: $e'),
-                                      backgroundColor: Colors.red,
-                                      duration: const Duration(seconds: 6),
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                            icon: const Icon(Icons.check),
-                            label: const Text('Approve'),
-                          ),
-                          const SizedBox(width: 12),
-                          OutlinedButton.icon(
-                            onPressed: () async {
-                              await _rejectParentRequest(d.id);
+                      )
+                    else
+                      const Text(
+                        'Auto-linked via email (No ID provided)',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontStyle: FontStyle.italic,
+                          fontSize: 12,
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            try {
+                              await _approveParentRequest(d.id, data);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Request rejected'),
+                                    content: Text(
+                                      'Parent approved successfully!\n✅ Email notification sent.',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    duration: Duration(seconds: 4),
                                   ),
                                 );
                               }
-                            },
-                            icon: const Icon(Icons.close),
-                            label: const Text('Reject'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error: $e'),
+                                    backgroundColor: Colors.red,
+                                    duration: const Duration(seconds: 6),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.check),
+                          label: const Text('Approve'),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            await _rejectParentRequest(d.id);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Request rejected'),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.close),
+                          label: const Text('Reject'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              );
-            },
-          );
-        },
-      ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (kIsWeb) return content;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Parent Verification')),
+      body: content,
     );
   }
 

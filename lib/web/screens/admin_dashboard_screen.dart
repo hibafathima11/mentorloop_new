@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mentorloop_new/utils/responsive.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mentorloop_new/web/screens/notificationscreen.dart';
-import 'package:mentorloop_new/web/screens/settings_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:mentorloop_new/web/screens/landing_page.dart';
-import 'package:mentorloop_new/web/screens/admin_login_screen.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
-  const AdminDashboardScreen({super.key});
+class WebAdminDashboard extends StatelessWidget {
+  const WebAdminDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,96 +12,14 @@ class AdminDashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header / Toolbar
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search anything...',
-                      prefixIcon: Icon(Icons.search, color: Color(0xFF8B5E3C)),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              _CircleIconButton(
-                icon: Icons.notifications_none,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AdminNotificationsScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(width: 12),
-              _CircleIconButton(
-                icon: Icons.settings_outlined,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                  );
-                },
-              ),
-              const SizedBox(width: 12),
-              _CircleIconButton(
-                icon: Icons.logout,
-                onTap: () async {
-                  await FirebaseAuth.instance.signOut();
-                  if (kIsWeb) {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const LandingPage()),
-                      (route) => false,
-                    );
-                  } else {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
-                      (route) => false,
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
           const SizedBox(height: 24),
           // Welcome Card
           Container(
             width: double.infinity,
-            padding: ResponsiveHelper.getResponsivePaddingAll(context),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF8B5E3C), Color(0xFF6B4423)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(
-                ResponsiveHelper.getResponsiveCardRadius(context),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF8B5E3C).withValues(alpha: 0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              color: const Color(0xFF8B5E3C),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -437,10 +349,7 @@ class AdminDashboardScreen extends StatelessWidget {
 
               return Container(
                 width: double.infinity,
-                constraints: const BoxConstraints(
-                  minHeight: 100,
-                  maxHeight: 500,
-                ),
+                constraints: const BoxConstraints(minHeight: 100),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(
@@ -621,21 +530,8 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [color, color.withValues(alpha: 0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(
-          ResponsiveHelper.getResponsiveCardRadius(context),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        color: color,
+        borderRadius: BorderRadius.circular(12),
       ),
       padding: EdgeInsets.all(ResponsiveHelper.isMobile(context) ? 16 : 20),
       child: Column(
@@ -645,44 +541,32 @@ class _StatCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: ResponsiveHelper.getResponsiveFontSize(
-                      context,
-                      mobile: 12,
-                      tablet: 13,
-                      desktop: 14,
-                    ),
-                    fontWeight: FontWeight.w600,
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: ResponsiveHelper.getResponsiveFontSize(
+                    context,
+                    mobile: 12,
+                    tablet: 13,
+                    desktop: 14,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  fontWeight: FontWeight.w500,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: ResponsiveHelper.getResponsiveIconSize(
-                    context,
-                    mobile: 20,
-                    tablet: 22,
-                    desktop: 24,
-                  ),
-                ),
+                child: Icon(icon, color: Colors.white, size: 20),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             value,
             style: TextStyle(
@@ -697,54 +581,21 @@ class _StatCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Flexible(
-            child: Text(
-              subtitle,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.9),
-                fontSize: ResponsiveHelper.getResponsiveFontSize(
-                  context,
-                  mobile: 10,
-                  tablet: 11,
-                  desktop: 12,
-                ),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                context,
+                mobile: 10,
+                tablet: 11,
+                desktop: 12,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CircleIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _CircleIconButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(25),
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Icon(icon, color: const Color(0xFF8B5E3C)),
       ),
     );
   }

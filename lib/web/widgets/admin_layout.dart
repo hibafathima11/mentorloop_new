@@ -7,11 +7,15 @@ import 'package:mentorloop_new/web/screens/admin_login_screen.dart';
 class AdminLayout extends StatefulWidget {
   final Widget child;
   final String title;
+  final Function(int)? onNavItemSelected;
+  final int selectedIndex;
 
   const AdminLayout({
     super.key,
     required this.child,
     required this.title,
+    this.onNavItemSelected,
+    this.selectedIndex = 0,
   });
 
   @override
@@ -32,7 +36,7 @@ class _AdminLayoutState extends State<AdminLayout> {
         children: [
           // Sidebar
           if (!isMobile)
-            _buildSidebar(screenSize.width)
+            _buildSidebar(250)
           else if (_sidebarExpanded)
             _buildSidebar(screenSize.width * 0.7),
           // Main Content
@@ -42,21 +46,7 @@ class _AdminLayoutState extends State<AdminLayout> {
                 // Top Bar
                 _buildTopBar(context, isMobile),
                 // Content
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight - 48,
-                          ),
-                          child: widget.child,
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                Expanded(child: widget.child),
               ],
             ),
           ),
@@ -70,12 +60,7 @@ class _AdminLayoutState extends State<AdminLayout> {
       width: _sidebarExpanded ? width : 80,
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          right: BorderSide(
-            color: Colors.grey[200]!,
-            width: 1,
-          ),
-        ),
+        border: Border(right: BorderSide(color: Colors.grey[200]!, width: 1)),
       ),
       child: Column(
         children: [
@@ -84,10 +69,7 @@ class _AdminLayoutState extends State<AdminLayout> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(
-                  color: Colors.grey[200]!,
-                  width: 1,
-                ),
+                bottom: BorderSide(color: Colors.grey[200]!, width: 1),
               ),
             ),
             child: Row(
@@ -130,29 +112,64 @@ class _AdminLayoutState extends State<AdminLayout> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               children: [
                 _sidebarItem(
-                  icon: Icons.dashboard,
+                  index: 0,
+                  icon: Icons.dashboard_outlined,
                   label: 'Dashboard',
-                  isActive: true,
+                  isActive: widget.selectedIndex == 0,
                 ),
                 _sidebarItem(
-                  icon: Icons.people,
+                  index: 1,
+                  icon: Icons.group_outlined,
                   label: 'Users',
+                  isActive: widget.selectedIndex == 1,
                 ),
                 _sidebarItem(
-                  icon: Icons.school,
+                  index: 2,
+                  icon: Icons.how_to_reg_outlined,
+                  label: 'Student Approval',
+                  isActive: widget.selectedIndex == 2,
+                ),
+                _sidebarItem(
+                  index: 3,
+                  icon: Icons.verified_outlined,
+                  label: 'Parent Verification',
+                  isActive: widget.selectedIndex == 3,
+                ),
+                _sidebarItem(
+                  index: 4,
+                  icon: Icons.badge_outlined,
+                  label: 'Teacher Credentials',
+                  isActive: widget.selectedIndex == 4,
+                ),
+                _sidebarItem(
+                  index: 5,
+                  icon: Icons.book_outlined,
+                  label: 'Subjects',
+                  isActive: widget.selectedIndex == 5,
+                ),
+                _sidebarItem(
+                  index: 6,
+                  icon: Icons.school_outlined,
                   label: 'Courses',
+                  isActive: widget.selectedIndex == 6,
                 ),
                 _sidebarItem(
-                  icon: Icons.assignment,
+                  index: 7,
+                  icon: Icons.assignment_outlined,
                   label: 'Assignments',
+                  isActive: widget.selectedIndex == 7,
                 ),
                 _sidebarItem(
-                  icon: Icons.assessment,
-                  label: 'Analytics',
+                  index: 8,
+                  icon: Icons.description_outlined,
+                  label: 'Exams',
+                  isActive: widget.selectedIndex == 8,
                 ),
                 _sidebarItem(
-                  icon: Icons.settings,
-                  label: 'Settings',
+                  index: 9,
+                  icon: Icons.analytics_outlined,
+                  label: 'User Analytics',
+                  isActive: widget.selectedIndex == 9,
                 ),
               ],
             ),
@@ -162,10 +179,7 @@ class _AdminLayoutState extends State<AdminLayout> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               border: Border(
-                top: BorderSide(
-                  color: Colors.grey[200]!,
-                  width: 1,
-                ),
+                top: BorderSide(color: Colors.grey[200]!, width: 1),
               ),
             ),
             child: _sidebarItem(
@@ -180,6 +194,7 @@ class _AdminLayoutState extends State<AdminLayout> {
   }
 
   Widget _sidebarItem({
+    int? index,
     required IconData icon,
     required String label,
     bool isActive = false,
@@ -188,7 +203,9 @@ class _AdminLayoutState extends State<AdminLayout> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Material(
-        color: isActive ? const Color(0xFF8B5E3C).withOpacity(0.1) : Colors.transparent,
+        color: isActive
+            ? const Color(0xFF8B5E3C).withOpacity(0.1)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           onTap: () async {
@@ -208,6 +225,9 @@ class _AdminLayoutState extends State<AdminLayout> {
               }
               return;
             }
+            if (index != null && widget.onNavItemSelected != null) {
+              widget.onNavItemSelected!(index);
+            }
           },
           borderRadius: BorderRadius.circular(8),
           child: Padding(
@@ -219,8 +239,8 @@ class _AdminLayoutState extends State<AdminLayout> {
                   color: isActive
                       ? const Color(0xFF8B5E3C)
                       : isLogout
-                          ? Colors.red
-                          : Colors.grey[600],
+                      ? Colors.red
+                      : Colors.grey[600],
                   size: 24,
                 ),
                 if (_sidebarExpanded) ...[
@@ -231,10 +251,9 @@ class _AdminLayoutState extends State<AdminLayout> {
                       color: isActive
                           ? const Color(0xFF8B5E3C)
                           : isLogout
-                              ? Colors.red
-                              : Colors.grey[700],
-                      fontWeight:
-                          isActive ? FontWeight.w600 : FontWeight.w500,
+                          ? Colors.red
+                          : Colors.grey[700],
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                     ),
                   ),
                 ],
@@ -251,12 +270,7 @@ class _AdminLayoutState extends State<AdminLayout> {
       height: 70,
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey[200]!,
-            width: 1,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey[200]!, width: 1)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),

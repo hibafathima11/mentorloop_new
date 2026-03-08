@@ -5,6 +5,7 @@ import 'package:mentorloop_new/utils/data_service.dart';
 import 'package:mentorloop_new/models/entities.dart';
 import 'package:mentorloop_new/utils/debouncer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AdminSubjectsScreen extends StatefulWidget {
   const AdminSubjectsScreen({super.key});
@@ -33,7 +34,7 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
 
   void _onFieldChanged() {
     _debouncer.run(() async {
-       await _autoSaveCourse();
+      await _autoSaveCourse();
     });
   }
 
@@ -68,7 +69,7 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
     } catch (e) {
       debugPrint('Auto-save error: $e');
     } finally {
-       if (mounted) setState(() => _isAutoSaving = false);
+      if (mounted) setState(() => _isAutoSaving = false);
     }
   }
 
@@ -103,6 +104,331 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Widget content = SafeArea(
+      child: SingleChildScrollView(
+        padding: ResponsiveHelper.getResponsivePaddingAll(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Create Course',
+              style: TextStyle(
+                color: const Color(0xFF8B5E3C),
+                fontSize: ResponsiveHelper.getResponsiveFontSize(
+                  context,
+                  mobile: 20,
+                  tablet: 22,
+                  desktop: 24,
+                ),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(
+              height: ResponsiveHelper.getResponsiveMargin(
+                context,
+                mobile: 12,
+                tablet: 14,
+                desktop: 16,
+              ),
+            ),
+            Container(
+              padding: ResponsiveHelper.getResponsivePaddingAll(context),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(
+                  ResponsiveHelper.getResponsiveCardRadius(context),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  if (_isAutoSaving)
+                    const LinearProgressIndicator(minHeight: 2),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        _field(
+                          context,
+                          controller: _titleController,
+                          label: 'Title',
+                          validator: _required,
+                          onChanged: (_) => _onFieldChanged(),
+                        ),
+                        SizedBox(
+                          height: ResponsiveHelper.getResponsiveMargin(
+                            context,
+                            mobile: 12,
+                            tablet: 14,
+                            desktop: 16,
+                          ),
+                        ),
+                        _field(
+                          context,
+                          controller: _descriptionController,
+                          label: 'Description',
+                          maxLines: 3,
+                          validator: _required,
+                          onChanged: (_) => _onFieldChanged(),
+                        ),
+                        SizedBox(
+                          height: ResponsiveHelper.getResponsiveMargin(
+                            context,
+                            mobile: 12,
+                            tablet: 14,
+                            desktop: 16,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Assign Teacher',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              StreamBuilder<List<UserProfile>>(
+                                stream: DataService.streamTeachers(),
+                                builder: (context, snapshot) {
+                                  final teachers = snapshot.data ?? [];
+                                  return DropdownButtonFormField<String>(
+                                    value: _selectedTeacherId,
+                                    items: teachers.map((t) {
+                                      final displayName = t.name.isNotEmpty
+                                          ? t.name
+                                          : t.email;
+                                      return DropdownMenuItem(
+                                        value: t.uid,
+                                        child: Text(displayName),
+                                      );
+                                    }).toList(),
+                                    onChanged: (v) {
+                                      setState(() => _selectedTeacherId = v);
+                                      _onFieldChanged();
+                                    },
+                                    validator: (v) => v == null || v.isEmpty
+                                        ? 'Required'
+                                        : null,
+                                    decoration: InputDecoration(
+                                      labelText: "Teacher",
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          ResponsiveHelper.getResponsiveCardRadius(
+                                            context,
+                                          ),
+                                        ),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.grey[50],
+                                      contentPadding:
+                                          ResponsiveHelper.getResponsivePaddingSymmetric(
+                                            context,
+                                            horizontal: 16,
+                                            vertical: 14,
+                                          ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          height: ResponsiveHelper.getResponsiveMargin(
+                            context,
+                            mobile: 16,
+                            tablet: 18,
+                            desktop: 20,
+                          ),
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          height: ResponsiveHelper.getResponsiveButtonHeight(
+                            context,
+                          ),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (_currentlyEditingId != null) {
+                                _titleController.clear();
+                                _descriptionController.clear();
+                                setState(() {
+                                  _currentlyEditingId = null;
+                                  _selectedTeacherId = null;
+                                });
+                              } else {
+                                _createCourse();
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF8B5E3C),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  ResponsiveHelper.getResponsiveCardRadius(
+                                    context,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              _currentlyEditingId != null
+                                  ? 'Finish & Clear'
+                                  : 'Create Course',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: ResponsiveHelper.getResponsiveMargin(
+                context,
+                mobile: 24,
+                tablet: 30,
+                desktop: 36,
+              ),
+            ),
+            Text(
+              'All Courses',
+              style: TextStyle(
+                color: const Color(0xFF8B5E3C),
+                fontSize: ResponsiveHelper.getResponsiveFontSize(
+                  context,
+                  mobile: 20,
+                  tablet: 22,
+                  desktop: 24,
+                ),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(
+              height: ResponsiveHelper.getResponsiveMargin(
+                context,
+                mobile: 12,
+                tablet: 14,
+                desktop: 16,
+              ),
+            ),
+            StreamBuilder<List<Course>>(
+              stream: DataService.watchAllCourses(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final courses = snapshot.data!;
+                if (courses.isEmpty) {
+                  return const Text('No courses yet');
+                }
+                return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: courses.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, i) {
+                    final c = courses[i];
+                    return Container(
+                      padding: ResponsiveHelper.getResponsivePaddingAll(
+                        context,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(
+                          ResponsiveHelper.getResponsiveCardRadius(context),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  c.title,
+                                  style: TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize:
+                                        ResponsiveHelper.getResponsiveFontSize(
+                                          context,
+                                          mobile: 16,
+                                          tablet: 18,
+                                          desktop: 20,
+                                        ),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  c.description,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                FutureBuilder<UserProfile?>(
+                                  future: DataService.getUser(c.teacherId),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasData &&
+                                        snapshot.data != null) {
+                                      final teacher = snapshot.data!;
+                                      return Text(
+                                        'Teacher: ${teacher.name.isNotEmpty ? teacher.name : teacher.email}',
+                                        style: TextStyle(color: AppColors.grey),
+                                      );
+                                    }
+                                    return Text(
+                                      'Teacher: Loading...',
+                                      style: TextStyle(color: AppColors.grey),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Color(0xFF8B5E3C),
+                            ),
+                            onPressed: () => _showEditDialog(c),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (kIsWeb) return content;
+
     return Scaffold(
       backgroundColor: AppColors.secondaryBackground,
       appBar: AppBar(
@@ -113,324 +439,7 @@ class _AdminSubjectsScreenState extends State<AdminSubjectsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: ResponsiveHelper.getResponsivePaddingAll(context),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Create Course',
-                style: TextStyle(
-                  color: const Color(0xFF8B5E3C),
-                  fontSize: ResponsiveHelper.getResponsiveFontSize(
-                    context,
-                    mobile: 20,
-                    tablet: 22,
-                    desktop: 24,
-                  ),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(
-                height: ResponsiveHelper.getResponsiveMargin(
-                  context,
-                  mobile: 12,
-                  tablet: 14,
-                  desktop: 16,
-                ),
-              ),
-              Container(
-                padding: ResponsiveHelper.getResponsivePaddingAll(context),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(
-                    ResponsiveHelper.getResponsiveCardRadius(context),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    if (_isAutoSaving)
-                      const LinearProgressIndicator(minHeight: 2),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          _field(
-                            context,
-                            controller: _titleController,
-                            label: 'Title',
-                            validator: _required,
-                            onChanged: (_) => _onFieldChanged(),
-                          ),
-                          SizedBox(
-                            height: ResponsiveHelper.getResponsiveMargin(
-                              context,
-                              mobile: 12,
-                              tablet: 14,
-                              desktop: 16,
-                            ),
-                          ),
-                          _field(
-                            context,
-                            controller: _descriptionController,
-                            label: 'Description',
-                            maxLines: 3,
-                            validator: _required,
-                            onChanged: (_) => _onFieldChanged(),
-                          ),
-                          SizedBox(
-                            height: ResponsiveHelper.getResponsiveMargin(
-                              context,
-                              mobile: 12,
-                              tablet: 14,
-                              desktop: 16,
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Assign Teacher',
-                                  style: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                StreamBuilder<List<UserProfile>>(
-                                  stream: DataService.streamTeachers(),
-                                  builder: (context, snapshot) {
-                                    final teachers = snapshot.data ?? [];
-                                    return DropdownButtonFormField<String>(
-                                      value: _selectedTeacherId,
-                                      items: teachers.map((t) {
-                                        final displayName =
-                                            t.name.isNotEmpty ? t.name : t.email;
-                                        return DropdownMenuItem(
-                                          value: t.uid,
-                                          child: Text(displayName),
-                                        );
-                                      }).toList(),
-                                      onChanged: (v) {
-                                        setState(() => _selectedTeacherId = v);
-                                        _onFieldChanged();
-                                      },
-                                      validator: (v) =>
-                                          v == null || v.isEmpty ? 'Required' : null,
-                                      decoration: InputDecoration(
-                                        labelText: "Teacher",
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            ResponsiveHelper
-                                                .getResponsiveCardRadius(context),
-                                          ),
-                                          borderSide: BorderSide.none,
-                                        ),
-                                        filled: true,
-                                        fillColor: Colors.grey[50],
-                                        contentPadding: ResponsiveHelper
-                                            .getResponsivePaddingSymmetric(
-                                          context,
-                                          horizontal: 16,
-                                          vertical: 14,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            height: ResponsiveHelper.getResponsiveMargin(
-                              context,
-                              mobile: 16,
-                              tablet: 18,
-                              desktop: 20,
-                            ),
-                          ),
-                          SizedBox(
-                            width: double.infinity,
-                            height:
-                                ResponsiveHelper.getResponsiveButtonHeight(context),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                if (_currentlyEditingId != null) {
-                                  _titleController.clear();
-                                  _descriptionController.clear();
-                                  setState(() {
-                                    _currentlyEditingId = null;
-                                    _selectedTeacherId = null;
-                                  });
-                                } else {
-                                  _createCourse();
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF8B5E3C),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    ResponsiveHelper.getResponsiveCardRadius(
-                                      context,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              child: Text(_currentlyEditingId != null
-                                  ? 'Finish & Clear'
-                                  : 'Create Course'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: ResponsiveHelper.getResponsiveMargin(
-                  context,
-                  mobile: 24,
-                  tablet: 30,
-                  desktop: 36,
-                ),
-              ),
-              Text(
-                'All Courses',
-                style: TextStyle(
-                  color: const Color(0xFF8B5E3C),
-                  fontSize: ResponsiveHelper.getResponsiveFontSize(
-                    context,
-                    mobile: 20,
-                    tablet: 22,
-                    desktop: 24,
-                  ),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(
-                height: ResponsiveHelper.getResponsiveMargin(
-                  context,
-                  mobile: 12,
-                  tablet: 14,
-                  desktop: 16,
-                ),
-              ),
-              StreamBuilder<List<Course>>(
-                stream: DataService.watchAllCourses(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final courses = snapshot.data!;
-                  if (courses.isEmpty) {
-                    return const Text('No courses yet');
-                  }
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: courses.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, i) {
-                      final c = courses[i];
-                      return Container(
-                        padding: ResponsiveHelper.getResponsivePaddingAll(
-                          context,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(
-                            ResponsiveHelper.getResponsiveCardRadius(context),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    c.title,
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize:
-                                          ResponsiveHelper.getResponsiveFontSize(
-                                            context,
-                                            mobile: 16,
-                                            tablet: 18,
-                                            desktop: 20,
-                                          ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    c.description,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  FutureBuilder<UserProfile?>(
-                                    future: DataService.getUser(c.teacherId),
-                                    builder: (context, snapshot) {
-                                      if (snapshot.hasData &&
-                                          snapshot.data != null) {
-                                        final teacher = snapshot.data!;
-                                        return Text(
-                                          'Teacher: ${teacher.name.isNotEmpty ? teacher.name : teacher.email}',
-                                          style: TextStyle(
-                                            color: AppColors.grey,
-                                          ),
-                                        );
-                                      }
-                                      return Text(
-                                        'Teacher: Loading...',
-                                        style: TextStyle(color: AppColors.grey),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Color(0xFF8B5E3C),
-                              ),
-                              onPressed: () => _showEditDialog(c),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
+      body: content,
     );
   }
 
