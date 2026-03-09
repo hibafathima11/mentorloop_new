@@ -37,15 +37,17 @@ class _AccountScreenState extends State<AccountScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
       final data = await AuthService.getUserProfile(user.uid);
-      setState(() {
-        _email = user.email ?? '';
-        _name = (data?['name'] as String?) ?? '';
-        _phone = (data?['phone'] as String?) ?? '';
-        _photoUrl = data?['photoUrl'] as String?;
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _email = user.email ?? '';
+          _name = (data?['name'] as String?) ?? '';
+          _phone = (data?['phone'] as String?) ?? '';
+          _photoUrl = data?['photoUrl'] as String?;
+          _loading = false;
+        });
+      }
     } catch (_) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -53,44 +55,95 @@ class _AccountScreenState extends State<AccountScreen> {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 85,
+      imageQuality: 70,
     );
     if (picked == null) return;
+
     setState(() => _uploading = true);
     try {
       final url = await CloudinaryService.uploadFile(
         file: File(picked.path),
         resourceType: 'image',
       );
-      setState(() => _photoUrl = url);
-      await _saveProfile(); // <-- Add this line to save and reload profile
+
+      // Update Firestore immediately
+      await AuthService.updateCurrentUserProfile(photoUrl: url);
+
+      if (mounted) {
+        setState(() {
+          _photoUrl = url;
+          _uploading = false;
+        });
+      }
+
+      _showNote('Profile picture updated');
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
-    } finally {
-      setState(() => _uploading = false);
+      if (mounted) {
+        setState(() => _uploading = false);
+        _showNote('Upload failed: $e');
+      }
     }
   }
 
-  Future<void> _saveProfile() async {
-    setState(() => _uploading = true);
+  Future<void> _editProfileField(
+    String label,
+    String currentValue,
+    Function(String) onSave,
+  ) async {
+    final controller = TextEditingController(text: currentValue);
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit $label'),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onSave(controller.text.trim());
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveName(String newName) async {
+    if (newName.isEmpty) return;
+    setState(() => _loading = true);
     try {
-      await AuthService.updateCurrentUserProfile(
-        name: _name.trim().isEmpty ? null : _name.trim(),
-        phone: _phone.trim().isEmpty ? null : _phone.trim(),
-        photoUrl: _photoUrl,
-      );
-      await _loadProfile(); // reload latest info~
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Profile updated')));
+      await AuthService.updateCurrentUserProfile(name: newName);
+      setState(() => _name = newName);
+      _showNote('Name updated');
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      _showNote('Update failed: $e');
     } finally {
-      setState(() => _uploading = false);
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _savePhone(String newPhone) async {
+    setState(() => _loading = true);
+    try {
+      await AuthService.updateCurrentUserProfile(phone: newPhone);
+      setState(() => _phone = newPhone);
+      _showNote('Phone updated');
+    } catch (e) {
+      _showNote('Update failed: $e');
+    } finally {
+      setState(() => _loading = false);
     }
   }
 
@@ -124,33 +177,42 @@ class _AccountScreenState extends State<AccountScreen> {
                   Center(
                     child: Stack(
                       children: [
-                        CircleAvatar(
-                          radius: 44,
-                          backgroundColor: AppColors.white,
+                        GestureDetector(
+                          onTap: _pickAndUploadAvatar,
                           child: CircleAvatar(
-                            radius: 40,
-                            backgroundColor: AppColors.primaryBackground,
-                            backgroundImage: _photoUrl == null
-                                ? null
-                                : NetworkImage(_photoUrl!),
-                            child: _photoUrl == null
-                                ? Icon(
-                                    Icons.person,
-                                    size: 40,
-                                    color: AppColors.primaryButton,
-                                  )
-                                : null,
+                            radius: 46,
+                            backgroundColor: AppColors.primaryButton
+                                .withOpacity(0.2),
+                            child: CircleAvatar(
+                              radius: 44,
+                              backgroundColor: AppColors.white,
+                              child: CircleAvatar(
+                                radius: 40,
+                                backgroundColor: AppColors.primaryBackground,
+                                backgroundImage:
+                                    (_photoUrl != null && _photoUrl!.isNotEmpty)
+                                    ? NetworkImage(_photoUrl!)
+                                    : null,
+                                child: (_photoUrl == null || _photoUrl!.isEmpty)
+                                    ? Icon(
+                                        Icons.person,
+                                        size: 40,
+                                        color: AppColors.primaryButton,
+                                      )
+                                    : null,
+                              ),
+                            ),
                           ),
                         ),
                         Positioned(
                           right: 0,
                           top: 0,
                           child: Container(
-                            height: 22,
-                            width: 22,
+                            height: 28,
+                            width: 28,
                             decoration: BoxDecoration(
                               color: AppColors.primaryButton,
-                              borderRadius: BorderRadius.circular(11),
+                              shape: BoxShape.circle,
                               border: Border.all(
                                 color: AppColors.white,
                                 width: 2,
@@ -158,7 +220,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             ),
                             child: _uploading
                                 ? const Padding(
-                                    padding: EdgeInsets.all(3),
+                                    padding: EdgeInsets.all(4),
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       color: Colors.white,
@@ -169,7 +231,7 @@ class _AccountScreenState extends State<AccountScreen> {
                                     child: const Icon(
                                       Icons.camera_alt,
                                       color: Colors.white,
-                                      size: 14,
+                                      size: 16,
                                     ),
                                   ),
                           ),
@@ -178,11 +240,20 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _infoItem('Name', _name.isEmpty ? '-' : _name),
+                  _infoItem(
+                    'Name',
+                    _name.isEmpty ? 'Not set' : _name,
+                    onTap: () => _editProfileField('Name', _name, _saveName),
+                  ),
                   _infoItem('Email', _email.isEmpty ? '-' : _email),
-                  _infoItem('Phone', _phone.isEmpty ? '-' : _phone),
+                  _infoItem(
+                    'Phone',
+                    _phone.isEmpty ? 'Not set' : _phone,
+                    onTap: () => _editProfileField('Phone', _phone, _savePhone),
+                  ),
                   const SizedBox(height: 12),
                   Divider(color: AppColors.borderColor),
+
                   const SizedBox(height: 12),
                   _settingsItem(
                     context,
@@ -291,24 +362,31 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  Widget _infoItem(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.borderColor)),
-      ),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: AppColors.darkGrey,
-              fontWeight: FontWeight.w600,
+  Widget _infoItem(String label, String value, {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppColors.borderColor)),
+        ),
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: AppColors.darkGrey,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          const Spacer(),
-          Text(value, style: TextStyle(color: AppColors.textSecondary)),
-        ],
+            const Spacer(),
+            Text(value, style: TextStyle(color: AppColors.textSecondary)),
+            if (onTap != null) ...[
+              const SizedBox(width: 8),
+              Icon(Icons.edit, size: 16, color: AppColors.textSecondary),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -585,9 +663,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Name *',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Name *'),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -603,7 +679,8 @@ class _AccountScreenState extends State<AccountScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Email *',
                         hintText: 'Parent will use this email to register',
-                        helperText: 'Parent can register with this email to auto-link',
+                        helperText:
+                            'Parent can register with this email to auto-link',
                       ),
                       keyboardType: TextInputType.emailAddress,
                     ),
@@ -644,7 +721,9 @@ class _AccountScreenState extends State<AccountScreen> {
                             );
                             return;
                           }
-                          final email = emailController.text.trim().toLowerCase();
+                          final email = emailController.text
+                              .trim()
+                              .toLowerCase();
                           if (email.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -653,8 +732,9 @@ class _AccountScreenState extends State<AccountScreen> {
                             );
                             return;
                           }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                              .hasMatch(email)) {
+                          if (!RegExp(
+                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                          ).hasMatch(email)) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Please enter a valid email'),
@@ -669,7 +749,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             setState(() => isLoading = false);
                             return;
                           }
-                          
+
                           try {
                             final guardianData = {
                               'studentId': user.uid,
@@ -682,7 +762,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             await FirebaseFirestore.instance
                                 .collection('guardians')
                                 .add(guardianData);
-                            
+
                             setState(() => isLoading = false);
                             if (context.mounted) Navigator.pop(context);
                             if (context.mounted) {
@@ -699,9 +779,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             setState(() => isLoading = false);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error saving: $e'),
-                                ),
+                                SnackBar(content: Text('Error saving: $e')),
                               );
                             }
                           }
